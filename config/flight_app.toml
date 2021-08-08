@@ -1,0 +1,3 @@
+loglevel = "debug"
+listen = "127.0.0.1:8089"
+db_url = "<db url>"
