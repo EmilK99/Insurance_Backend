@@ -15,7 +15,7 @@ import (
 func initViper(configPath string) {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.SetEnvPrefix("omaha-admin")
+	viper.SetEnvPrefix("flight-app")
 
 	viper.SetDefault("loglevel", "debug")
 	viper.SetDefault("listen", "localhost:8080")
@@ -83,7 +83,7 @@ func main() {
 	var skipMigration bool
 
 	rootCmd := cobra.Command{
-		Use:     "omaha-admin",
+		Use:     "flight-app",
 		Version: "v1.0",
 		Run: func(cmd *cobra.Command, args []string) {
 			run(configPath, skipMigration)
