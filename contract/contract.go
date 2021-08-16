@@ -8,6 +8,7 @@ import (
 	"flight_app/api"
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
+	"math/rand"
 	"net/http"
 )
 
@@ -88,7 +89,7 @@ func CreateContract(p *pgxpool.Pool, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	res := response{ContractID: req.ID}
+	res := response{ContractID: rand.Intn(100000)}
 
 	w.WriteHeader(201)
 	if err := json.NewEncoder(w).Encode(res); err != nil {
