@@ -2,6 +2,10 @@ package main
 
 import (
 	"context"
+	"flight_app/api"
+	"flight_app/contract"
+	_ "flight_app/docs"
+	"github.com/gorilla/mux"
 	_ "github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rs/cors"
@@ -78,6 +82,24 @@ func run(configPath string, skipMigration bool) {
 	log.Info("HTTP server terminated")
 }
 
+func InitHandlers(pool *pgxpool.Pool) http.Handler {
+	r := mux.NewRouter()
+
+	r.HandleFunc("/api/calculate",
+		func(w http.ResponseWriter, r *http.Request) {
+			api.CalculateFeeHandler(w, r)
+		}).Methods("POST")
+
+	r.HandleFunc("/contract/create",
+		func(w http.ResponseWriter, r *http.Request) {
+			contract.CreateContract(pool, w, r)
+		}).Methods("POST")
+
+	// TODO: implement handlers for flight app
+
+	return r
+}
+
 func main() {
 	var configPath string
 	var skipMigration bool
@@ -90,7 +112,7 @@ func main() {
 		},
 	}
 
-	rootCmd.Flags().StringVarP(&configPath, "config", "c", "config/admin.toml", "Config file path")
+	rootCmd.Flags().StringVarP(&configPath, "config", "c", "config/flight_app.toml", "Config file path")
 	rootCmd.Flags().BoolVarP(&skipMigration, "skip-migration", "s", false, "Skip migration")
 	err := rootCmd.Execute()
 	if err != nil {

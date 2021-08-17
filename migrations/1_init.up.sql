@@ -8,5 +8,5 @@ CREATE TABLE IF NOT EXISTS contracts
     date            TIMESTAMP WITH TIME ZONE    NOT NULL,
     ticket_price    NUMERIC                     NOT NULL,
     fee             NUMERIC                     NOT NULL,
-    create_tx       TEXT                        NOT NULL,
+    create_tx       TEXT                        NOT NULL
                              );

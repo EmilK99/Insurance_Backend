@@ -1,0 +1,62 @@
+basePath: /
+consumes:
+- application/json
+definitions:
+  CalculateFeeRequest:
+    properties:
+      cancellation:
+        type: boolean
+        x-go-name: Cancellation
+      delay:
+        type: boolean
+        x-go-name: Delay
+      flight_number:
+        type: string
+        x-go-name: FlightNumber
+      ticket_price:
+        type: string
+        x-go-name: TicketPrice
+    type: object
+    x-go-package: flight_app/api
+  CalculateFeeResponse:
+    properties:
+      fee:
+        format: float
+        type: number
+        x-go-name: Fee
+    type: object
+    x-go-package: flight_app/api
+host: localhost
+info:
+  description: Documentation of our flight_app API.
+  title: flight_app.
+  version: 1.0.0
+paths:
+  /api/calculate:
+    post:
+      operationId: idOfCalculateEndpoint
+      parameters:
+      - description: Flight information.
+        in: body
+        name: Body
+        schema:
+          $ref: '#/definitions/CalculateFeeRequest'
+      responses:
+        "200":
+          $ref: '#/responses/calculateResponse'
+      summary: Calculate returns calculated fee.
+      tags:
+      - foobar-tag
+produces:
+- application/json
+responses:
+  calculateResponse:
+    description: Fee calculated on the basis of flight data.
+    schema:
+      $ref: '#/definitions/CalculateFeeResponse'
+schemes:
+- http
+securityDefinitions:
+  basic:
+    type: basic
+swagger: "2.0"
