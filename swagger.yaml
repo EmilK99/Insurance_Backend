@@ -46,7 +46,7 @@ paths:
           $ref: '#/responses/calculateResponse'
       summary: Calculate returns calculated fee.
       tags:
-      - foobar-tag
+      - Query
 produces:
 - application/json
 responses:

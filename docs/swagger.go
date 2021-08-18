@@ -2,7 +2,7 @@ package docs
 
 import "flight_app/api"
 
-// swagger:route POST /api/calculate foobar-tag idOfCalculateEndpoint
+// swagger:route POST /api/calculate Query idOfCalculateEndpoint
 // Calculate returns calculated fee.
 // responses:
 //   200: calculateResponse
