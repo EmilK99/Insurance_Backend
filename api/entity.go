@@ -2,6 +2,7 @@ package api
 
 const (
 	InFlightInfo = "InFlightInfo"
+	MetarEx      = "MetarEx"
 )
 
 type FlightInfo struct {
@@ -47,4 +48,28 @@ type InFlightInfoResponse struct {
 		AltitudeChange    string  `json:"altitudeChange"`
 		Waypoints         string  `json:"waypoints"`
 	} `json:"InFlightInfoResult"`
+}
+
+type MetarExResponse struct {
+	MetarExResult struct {
+		NextOffset int `json:"next_offset"`
+		Metar      []struct {
+			Airport       string  `json:"airport"`
+			Time          int     `json:"time"`
+			CloudFriendly string  `json:"cloud_friendly"`
+			CloudAltitude int     `json:"cloud_altitude"`
+			CloudType     string  `json:"cloud_type"`
+			Conditions    string  `json:"conditions"`
+			Pressure      int     `json:"pressure"`
+			TempAir       int     `json:"temp_air"`
+			TempDewpoint  int     `json:"temp_dewpoint"`
+			TempRelhum    int     `json:"temp_relhum"`
+			Visibility    float32 `json:"visibility"`
+			WindFriendly  string  `json:"wind_friendly"`
+			WindDirection int     `json:"wind_direction"`
+			WindSpeed     int     `json:"wind_speed"`
+			WindSpeedGust int     `json:"wind_speed_gust"`
+			RawData       string  `json:"raw_data"`
+		} `json:"metar"`
+	} `json:"MetarExResult"`
 }

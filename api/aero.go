@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"math/rand"
 	"net/http"
-	"net/url"
 )
 
 func CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +19,7 @@ func CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var res = CalculateFeeResponse{Fee: rand.Float32() * 5}
+	res := CalculateFeeResponse{Fee: rand.Float32() * 5}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
@@ -30,31 +28,16 @@ func CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username := viper.GetString("aeroapi_username")
-	apiKey := viper.GetString("aeroapi_apikey")
-	aeroApiURL := "https://" + username + ":" + apiKey + "@flightxml.flightaware.com/json/FlightXML2/"
-
-	data := url.Values{}
-	data.Set("ident", "RYR5004")
-
-	u, _ := url.ParseRequestURI(aeroApiURL + InFlightInfo)
-	u.RawQuery = data.Encode()
-	aeroApiURLStr := fmt.Sprintf("%v", u)
-
-	client := &http.Client{}
-	re, _ := http.NewRequest("POST", aeroApiURLStr, nil)
-
-	resp, _ := client.Do(re)
-
-	var flightInfo InFlightInfoResponse
-	err = json.NewDecoder(resp.Body).Decode(&flightInfo)
+	flightInfo, err := GetInFlightInfo("CCA612")
 	if err != nil {
-		log.Errorf("Unable to decode json: %v", err)
+		log.Errorf("Unable to get flight info: %v", err)
 		w.WriteHeader(500)
 		return
 	}
 
-	fmt.Printf("%+v\n", flightInfo)
+	metarEx, err := GetMetarExInfo(flightInfo.InFlightInfoResult.Origin)
+
+	fmt.Printf("%+v\n", metarEx.MetarExResult.Metar[0].WindSpeed)
 
 	//TODO: connect AeroAPI and get flight info
 }

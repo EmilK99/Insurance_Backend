@@ -62,7 +62,7 @@ func CreateContract(p *pgxpool.Pool, w http.ResponseWriter, r *http.Request) {
 	}
 	defer check.Close()
 
-	flightInfo, err := api.GetFlightInfo(req.FlightNumber)
+	flightInfo, err := api.GetInFlightInfo(req.FlightNumber)
 	if err != nil {
 		w.WriteHeader(500)
 		if err := json.NewEncoder(w).Encode(err); err != nil {
