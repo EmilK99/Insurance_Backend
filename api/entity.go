@@ -10,10 +10,10 @@ type FlightInfo struct {
 }
 
 type CalculateFeeRequest struct {
-	FlightNumber string `json:"flight_number"`
-	TicketPrice  string `json:"ticket_price"`
-	Cancellation bool   `json:"cancellation"`
-	Delay        bool   `json:"delay"`
+	FlightNumber string  `json:"flight_number"`
+	TicketPrice  float32 `json:"ticket_price"`
+	Cancellation bool    `json:"cancellation"`
+	Delay        bool    `json:"delay"`
 }
 
 type CalculateFeeResponse struct {

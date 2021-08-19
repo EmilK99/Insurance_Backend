@@ -2,10 +2,9 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	log "github.com/sirupsen/logrus"
-	"math/rand"
 	"net/http"
+	"strconv"
 )
 
 func CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +18,23 @@ func CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := CalculateFeeResponse{Fee: rand.Float32() * 5}
+	flightInfo, err := GetInFlightInfo(req.FlightNumber)
+	if err != nil {
+		log.Errorf("Unable to get flight info: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	premium, err := flightInfo.CalculateFee(req.TicketPrice)
+	if err != nil {
+		log.Errorf("Unable to calculate fee: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	res := CalculateFeeResponse{Fee: premium}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
@@ -27,17 +42,4 @@ func CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		return
 	}
-
-	flightInfo, err := GetInFlightInfo("CCA612")
-	if err != nil {
-		log.Errorf("Unable to get flight info: %v", err)
-		w.WriteHeader(500)
-		return
-	}
-
-	metarEx, err := GetMetarExInfo(flightInfo.InFlightInfoResult.Origin)
-
-	fmt.Printf("%+v\n", metarEx.MetarExResult.Metar[0].WindSpeed)
-
-	//TODO: connect AeroAPI and get flight info
 }
