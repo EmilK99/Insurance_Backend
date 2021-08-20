@@ -1,7 +1,7 @@
 package app
 
 import (
-	"flight_app/contract"
+	"flight_app/app/contract"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 

@@ -1,6 +1,8 @@
 package docs
 
-import "flight_app/api"
+import (
+	"flight_app/app/api"
+)
 
 // swagger:route POST /api/calculate Query idOfCalculateEndpoint
 // Calculate returns calculated fee.

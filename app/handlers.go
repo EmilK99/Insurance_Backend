@@ -1,8 +1,8 @@
 package app
 
 import (
-	"flight_app/api"
-	"flight_app/contract"
+	"flight_app/app/api"
+	"flight_app/app/contract"
 	"net/http"
 )
 

@@ -2,18 +2,26 @@ package app
 
 import (
 	"context"
+	event "flight_app/app/store"
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"net/http"
+	"os"
+	"os/signal"
 	"strings"
+	"time"
 )
 
 type server struct {
 	store  *Store
 	router *mux.Router
+}
+
+var eventListeners = event.Listeners{
+	"checkStatus": event.CheckStatus,
 }
 
 func initViper(configPath string) {
@@ -73,6 +81,26 @@ func Run(configPath string, skipMigration bool) {
 		}
 		conn.Release()
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
+
+	scheduler := event.NewScheduler(pool, eventListeners)
+	scheduler.CheckEventsInInterval(ctx, time.Minute)
+
+	scheduler.Schedule("checkStatus", "DMJLC", time.Now().Add(1*time.Minute))
+	scheduler.Schedule("PayBills", "UAL46", time.Now().Add(2*time.Minute))
+
+	go func() {
+		for range interrupt {
+			log.Println("\n❌ Interrupt received closing...")
+			cancel()
+		}
+	}()
+
+	<-ctx.Done()
 
 	listenAddr := viper.GetString("listen")
 	log.Infof("Starting HTTP server at %s...", listenAddr)
