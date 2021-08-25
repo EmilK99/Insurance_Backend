@@ -3,6 +3,7 @@ package app
 import (
 	"flight_app/app/api"
 	"flight_app/app/contract"
+	"flight_app/payments"
 	"net/http"
 )
 
@@ -18,7 +19,10 @@ func (s server) initHandlers() http.Handler {
 			contract.CreateContract(s.store.pool, w, r)
 		}).Methods("POST")
 
-	// TODO: paypal integration
+	s.router.HandleFunc("/create-payment-intent",
+		func(w http.ResponseWriter, r *http.Request) {
+			payments.HandleCreatePaymentIntent(s.store.pool, w, r)
+		}).Methods("POST")
 
 	return s.router
 }

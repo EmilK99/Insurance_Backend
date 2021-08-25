@@ -95,6 +95,6 @@ func (s *Scheduler) StartScheduler(ctx context.Context, interval time.Duration) 
 		interval = 60
 	}
 	quit, done := make(chan struct{}), make(chan struct{})
-	go s.CheckEventsInInterval(ctx, interval, quit, done)
+	go s.CheckEventsInInterval(ctx, interval)
 	return quit, done
 }

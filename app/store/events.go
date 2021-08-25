@@ -10,5 +10,5 @@ func CheckStatus(flightTd string) {
 	if err != nil {
 		log.Error(err)
 	}
-	log.Info(flightInfo.InFlightInfoResult.ArrivalTime)
+	log.Info(flightInfo.InFlightInfoResult.DepartureTime)
 }
