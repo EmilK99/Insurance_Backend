@@ -90,8 +90,8 @@ func Run(configPath string, skipMigration bool) {
 	scheduler := event.NewScheduler(pool, eventListeners)
 	scheduler.CheckEventsInInterval(ctx, time.Minute)
 
-	scheduler.Schedule("checkStatus", "DMJLC", time.Now().Add(1*time.Minute))
-	scheduler.Schedule("PayBills", "UAL46", time.Now().Add(2*time.Minute))
+	scheduler.Schedule("checkStatus", "DLH418", time.Now().Add(1*time.Minute))
+	scheduler.Schedule("checkStatus", "JAF7DY", time.Now().Add(2*time.Minute))
 
 	go func() {
 		for range interrupt {
@@ -99,8 +99,6 @@ func Run(configPath string, skipMigration bool) {
 			cancel()
 		}
 	}()
-
-	<-ctx.Done()
 
 	listenAddr := viper.GetString("listen")
 	log.Infof("Starting HTTP server at %s...", listenAddr)
@@ -113,6 +111,7 @@ func Run(configPath string, skipMigration bool) {
 		log.Fatalf("http.ListenAndServe: %v", err)
 	}
 
+	<-ctx.Done()
 	log.Info("HTTP server terminated")
 }
 
