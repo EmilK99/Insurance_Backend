@@ -1,8 +1,9 @@
 package api
 
 const (
-	InFlightInfo = "InFlightInfo"
-	MetarEx      = "MetarEx"
+	InFlightInfo          = "InFlightInfo"
+	MetarEx               = "MetarEx"
+	RegisterAlertEndpoint = "RegisterAlertEndpoint"
 )
 
 type FlightInfo struct {
