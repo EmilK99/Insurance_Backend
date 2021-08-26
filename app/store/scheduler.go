@@ -72,6 +72,7 @@ func (s Scheduler) callListeners(event Event) {
 
 func (s Scheduler) CheckEventsInInterval(ctx context.Context, duration time.Duration) {
 	ticker := time.NewTicker(duration)
+
 	go func() {
 		for {
 			select {
@@ -85,16 +86,6 @@ func (s Scheduler) CheckEventsInInterval(ctx context.Context, duration time.Dura
 					s.callListeners(e)
 				}
 			}
-
 		}
 	}()
-}
-
-func (s *Scheduler) StartScheduler(ctx context.Context, interval time.Duration) (chan<- struct{}, <-chan struct{}) {
-	if interval <= 0 {
-		interval = 60
-	}
-	quit, done := make(chan struct{}), make(chan struct{})
-	go s.CheckEventsInInterval(ctx, interval)
-	return quit, done
 }

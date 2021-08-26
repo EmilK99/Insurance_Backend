@@ -27,3 +27,14 @@ func NewMetarExURL(aeroApiURL, airport string) string {
 
 	return fmt.Sprintf("%v", u)
 }
+
+func NewRegisterAlertEndpointURL(aeroApiURL, endpoint string) string {
+	data := url.Values{}
+	data.Set("address", endpoint)
+	data.Add("format_type", "json/post")
+
+	u, _ := url.ParseRequestURI(aeroApiURL + MetarEx)
+	u.RawQuery = data.Encode()
+
+	return fmt.Sprintf("%v", u)
+}
