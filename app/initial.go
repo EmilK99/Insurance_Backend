@@ -9,8 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"net/http"
-	"os"
-	"os/signal"
 	"strings"
 	"time"
 )
@@ -83,22 +81,16 @@ func Run(configPath string, skipMigration bool) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
+	//interrupt := make(chan os.Signal, 1)
+	//signal.Notify(interrupt, os.Interrupt)
 
 	scheduler := event.NewScheduler(pool, eventListeners)
-	scheduler.CheckEventsInInterval(ctx, time.Minute)
+	scheduler.CheckEventsInInterval(ctx, 10*time.Second)
 
-	scheduler.Schedule("checkStatus", "DLH418", time.Now().Add(1*time.Minute))
-	scheduler.Schedule("checkStatus", "JAF7DY", time.Now().Add(2*time.Minute))
-
-	go func() {
-		for range interrupt {
-			log.Println("\n❌ Interrupt received closing...")
-			cancel()
-		}
-	}()
+	scheduler.Schedule("checkStatus", "RYR6TX", time.Now().Add(10*time.Second))
+	scheduler.Schedule("checkStatus", "BAW2676", time.Now().Add(20*time.Second))
 
 	listenAddr := viper.GetString("listen")
 	log.Infof("Starting HTTP server at %s...", listenAddr)
