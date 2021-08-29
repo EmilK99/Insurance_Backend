@@ -8,5 +8,14 @@ CREATE TABLE IF NOT EXISTS contracts
     date            TIMESTAMP WITH TIME ZONE    NOT NULL,
     ticket_price    NUMERIC                     NOT NULL,
     fee             NUMERIC                     NOT NULL,
-    create_tx       TEXT                        NOT NULL
+    create_tx       TEXT                        NOT NULL,
+    flight_date     TIMESTAMP WITH TIME ZONE    NOT NULL
                              );
+
+CREATE TABLE IF NOT EXISTS flights
+(
+    id INTEGER NOT NULL,
+    flight_id   VARCHAR(50)                 NOT NULL,
+    runAt            TIMESTAMP WITH TIME ZONE    NOT NULL,
+    name VARCHAR    NOT NULL
+                                  );

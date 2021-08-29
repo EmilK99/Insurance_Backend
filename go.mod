@@ -1,3 +1,5 @@
+// +heroku goVersion go1.17
+
 module flight_app
 
 go 1.16
