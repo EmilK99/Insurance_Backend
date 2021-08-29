@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -91,13 +92,17 @@ func Run(configPath string, skipMigration bool) {
 	//scheduler.Schedule("checkStatus", "BAW920", time.Now().Add(10*time.Second))
 	//scheduler.Schedule("checkStatus", "CCA680", time.Now().Add(20*time.Second))
 
-	listenAddr := viper.GetString("listen")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	listenAddr := viper.GetString("listen") + ":" + port
 	log.Infof("Starting HTTP server at %s...", listenAddr)
 	router := mux.NewRouter()
 
 	srv := newServer(store, router)
 	router.Handle("/", cors.AllowAll().Handler(srv.initHandlers()))
-	err = http.ListenAndServe(listenAddr, router)
+	err = http.ListenAndServe(":"+port, router)
 	if err != nil {
 		log.Fatalf("http.ListenAndServe: %v", err)
 	}
