@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 	"net/http"
 	"strings"
-	"time"
 )
 
 type server struct {
@@ -80,17 +79,17 @@ func Run(configPath string, skipMigration bool) {
 		conn.Release()
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	//ctx, cancel := context.WithCancel(context.Background())
+	//defer cancel()
 
 	//interrupt := make(chan os.Signal, 1)
 	//signal.Notify(interrupt, os.Interrupt)
 
-	scheduler := event.NewScheduler(pool, eventListeners)
-	scheduler.CheckEventsInInterval(ctx, 10*time.Second)
-
-	scheduler.Schedule("checkStatus", "RYR6TX", time.Now().Add(10*time.Second))
-	scheduler.Schedule("checkStatus", "BAW2676", time.Now().Add(20*time.Second))
+	//scheduler := event.NewScheduler(pool, eventListeners)
+	//scheduler.CheckEventsInInterval(ctx, 10*time.Second)
+	//
+	//scheduler.Schedule("checkStatus", "BAW920", time.Now().Add(10*time.Second))
+	//scheduler.Schedule("checkStatus", "CCA680", time.Now().Add(20*time.Second))
 
 	listenAddr := viper.GetString("listen")
 	log.Infof("Starting HTTP server at %s...", listenAddr)
@@ -103,7 +102,7 @@ func Run(configPath string, skipMigration bool) {
 		log.Fatalf("http.ListenAndServe: %v", err)
 	}
 
-	<-ctx.Done()
+	//<-ctx.Done()
 	log.Info("HTTP server terminated")
 }
 
