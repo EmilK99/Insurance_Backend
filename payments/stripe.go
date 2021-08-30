@@ -3,25 +3,17 @@ package payments
 import (
 	"bytes"
 	"encoding/json"
+	"flight_app/app/contract"
+	"fmt"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"io"
-	"log"
-	"net/http"
-
 	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/paymentintent"
+	"io"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
 )
-
-type item struct {
-	id string
-}
-
-func calculateOrderAmount(items []item) int64 {
-	// Replace this constant with a calculation of the order's amount
-	// Calculate the order total on the server to prevent
-	// users from directly manipulating the amount on the client
-	return 1099
-}
 
 func HandleCreatePaymentIntent(pool *pgxpool.Pool, w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -30,7 +22,8 @@ func HandleCreatePaymentIntent(pool *pgxpool.Pool, w http.ResponseWriter, r *htt
 	}
 
 	var req struct {
-		Items []item `json:"items"`
+		FlightNumber string `json:"flight_number"`
+		FlightDate   int64  `json:"flight_date"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -39,9 +32,21 @@ func HandleCreatePaymentIntent(pool *pgxpool.Pool, w http.ResponseWriter, r *htt
 		return
 	}
 
+	//TODO: get unique app id from header
+	var newContract = contract.Contract{UserID: "test", FlightNumber: req.FlightNumber, FlightDate: req.FlightDate}
+
+	err := newContract.CreateContract(pool)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("Unable to create contract: %v", err)
+		return
+	}
+
 	params := &stripe.PaymentIntentParams{
-		Amount:   stripe.Int64(calculateOrderAmount(req.Items)),
-		Currency: stripe.String(string(stripe.CurrencyUSD)),
+		Amount:      stripe.Int64(int64(newContract.Fee * 100)),
+		Currency:    stripe.String(string(stripe.CurrencyUSD)),
+		Customer:    stripe.String(newContract.UserID),
+		Description: stripe.String(fmt.Sprint(newContract.ID)),
 	}
 
 	pi, err := paymentintent.New(params)
@@ -72,4 +77,57 @@ func writeJSON(w http.ResponseWriter, v interface{}) {
 		log.Printf("io.Copy: %v", err)
 		return
 	}
+}
+
+func HandleStripeWebhook(pool *pgxpool.Pool, w http.ResponseWriter, r *http.Request) {
+	//http.HandleFunc("/webhook", func(w http.ResponseWriter, req *http.Request) {
+	const MaxBodyBytes = int64(65536)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodyBytes)
+	payload, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading request body: %v\n", err)
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
+	event := stripe.Event{}
+
+	if err := json.Unmarshal(payload, &event); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to parse webhook body json: %v\n", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Unmarshal the event data into an appropriate struct depending on its Type
+	switch event.Type {
+	case "payment_intent.succeeded":
+		var paymentIntent stripe.PaymentIntent
+		err := json.Unmarshal(event.Data.Raw, &paymentIntent)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error parsing webhook JSON: %v\n", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		fmt.Println("PaymentIntent was successful!")
+
+		err = contract.VerifyPayment(pool, paymentIntent.Description)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error verifying payment: %v\n", err)
+		}
+	case "payment_method.attached":
+		var paymentMethod stripe.PaymentMethod
+		err := json.Unmarshal(event.Data.Raw, &paymentMethod)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error parsing webhook JSON: %v\n", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		fmt.Println("PaymentMethod was attached to a Customer!")
+	// ... handle other event types
+	default:
+		fmt.Fprintf(os.Stderr, "Unhandled event type: %s\n", event.Type)
+	}
+
+	w.WriteHeader(http.StatusOK)
+
 }
