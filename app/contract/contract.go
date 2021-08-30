@@ -3,104 +3,74 @@ package contract
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"flight_app/app/api"
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
-	"math/rand"
-	"net/http"
+	"strconv"
 )
 
-func CreateContract(pool *pgxpool.Pool, w http.ResponseWriter, r *http.Request) {
-	var req Contract
-
-	type response struct {
-		ContractID int `json:"contract_id"`
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil { // bad request
-		w.WriteHeader(400)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			log.Print(r, err)
-		}
-		return
-	}
+func (c *Contract) CreateContract(pool *pgxpool.Pool) error {
 
 	conn, err := pool.Acquire(context.Background())
 	if err != nil {
 		log.Errorf("Unable to acquire a database connection: %v", err)
-		w.WriteHeader(500)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			log.Print(r, err)
-		}
-		return
+		return err
 	}
 	defer conn.Release()
 
 	var check int
 
 	err = conn.QueryRow(context.Background(),
-		"SELECT id FROM contracts WHERE user_id = $1, flight_number = $2", req.UserID, req.FlightNumber).Scan(&check)
+		"SELECT id FROM contracts WHERE user_id = $1, flight_number = $2, flight_date = $3", c.UserID, c.FlightNumber, c.FlightDate).Scan(&check)
 	if err != nil && err != sql.ErrNoRows {
 		log.Errorf("Unable to SELECT: %v\n", err)
-		w.WriteHeader(500)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			log.Print(r, err)
-		}
-		return
-
-	} else if err == sql.ErrNoRows {
-
+		return err
 	}
-
-	if true {
-
-	} else {
+	if check != 0 {
 		log.Errorf("Contract already exists")
-		w.WriteHeader(422)
-		if err := json.NewEncoder(w).Encode(errors.New("Contract already exists")); err != nil {
-			log.Print(r, err)
-		}
-		return
+		return errors.New("Contract already exists")
 	}
 
-	flightInfo, err := api.GetInFlightInfo(req.FlightNumber)
+	flightInfo, err := api.GetInFlightInfo(c.FlightNumber)
 	if err != nil {
-		w.WriteHeader(500)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			log.Print(r, err)
-		}
-		return
+		log.Errorf("%s", err)
+		return err
 	}
 
-	req.Fee, err = flightInfo.CalculateFee(req.TicketPrice)
+	c.Fee, err = flightInfo.CalculateFee(c.TicketPrice)
 	if err != nil {
-		w.WriteHeader(500)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			log.Print(r, err)
-		}
-		return
+		log.Errorf("%s", err)
+		return err
 	}
 
 	err = conn.QueryRow(context.Background(),
 		"INSERT INTO contract (user_id, flight_number, date, ticket_price, fee) VALUES ($1, $2, $3, $4, $5) RETURNING ID",
-		req.UserID, req.FlightNumber, req.Date, req.TicketPrice, req.Fee,
-	).Scan(&req.ID)
+		c.UserID, c.FlightNumber, c.Date, c.TicketPrice, c.Fee,
+	).Scan(&c.ID)
 	if err != nil {
-		w.WriteHeader(500)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			log.Print(r, err)
-		}
-		return
+		log.Errorf("Unable to INSERT: %v\n", err)
+		return err
 	}
+	return nil
+}
 
-	res := response{ContractID: rand.Intn(100000)}
-
-	w.WriteHeader(201)
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		log.Print(r, err)
-		return
+func VerifyPayment(pool *pgxpool.Pool, contractId string) error {
+	conn, err := pool.Acquire(context.Background())
+	if err != nil {
+		log.Errorf("Unable to acquire a database connection: %v", err)
+		return err
 	}
+	defer conn.Release()
+
+	id, _ := strconv.ParseInt(contractId, 10, 0)
+
+	_, err = conn.Exec(context.Background(),
+		"UPDATE contract SET payment=true WHERE id=$1",
+		id)
+	if err != nil {
+		log.Errorf("Unable to INSERT: %v\n", err)
+		return err
+	}
+	return nil
 }
