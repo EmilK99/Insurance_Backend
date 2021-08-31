@@ -1,14 +1,11 @@
 package api
 
 const (
-	InFlightInfo          = "InFlightInfo"
+	FlightInfo            = "FlightInfo"
+	FlightInfoEx          = "FlightInfoEx"
 	MetarEx               = "MetarEx"
 	RegisterAlertEndpoint = "RegisterAlertEndpoint"
 )
-
-type FlightInfo struct {
-	//TODO: get flight info structure from doc
-}
 
 type CalculateFeeRequest struct {
 	FlightNumber string  `json:"flight_number"`
@@ -49,6 +46,33 @@ type InFlightInfoResponse struct {
 		AltitudeChange    string  `json:"altitudeChange"`
 		Waypoints         string  `json:"waypoints"`
 	} `json:"InFlightInfoResult"`
+}
+
+type FlightInfoResponse struct {
+	FlightInfoResult struct {
+		NextOffset int `json:"next_offset"`
+		Flights    []struct {
+			Ident                string `json:"ident"`
+			Aircrafttype         string `json:"aircrafttype"`
+			FiledEte             string `json:"filed_ete"`
+			FiledTime            int    `json:"filed_time"`
+			FiledDeparturetime   int    `json:"filed_departuretime"`
+			FiledAirspeedKts     int    `json:"filed_airspeed_kts"`
+			FiledAirspeedMach    string `json:"filed_airspeed_mach"`
+			FiledAltitude        int    `json:"filed_altitude"`
+			Route                string `json:"route"`
+			Actualdeparturetime  int    `json:"actualdeparturetime"`
+			Estimatedarrivaltime int    `json:"estimatedarrivaltime"`
+			Actualarrivaltime    int    `json:"actualarrivaltime"`
+			Diverted             string `json:"diverted"`
+			Origin               string `json:"origin"`
+			Destination          string `json:"destination"`
+			OriginName           string `json:"originName"`
+			OriginCity           string `json:"originCity"`
+			DestinationName      string `json:"destinationName"`
+			DestinationCity      string `json:"destinationCity"`
+		} `json:"flights"`
+	} `json:"FlightInfoResult"`
 }
 
 type MetarExResponse struct {

@@ -10,27 +10,42 @@ import (
 	"strings"
 )
 
-func GetInFlightInfo(flightNumber string) (*InFlightInfoResponse, error) {
+func GetFlightInfo(flightNumber string) (*FlightInfoResponse, error) {
 	username := viper.GetString("aeroapi_username")
 	apiKey := viper.GetString("aeroapi_apikey")
 	aeroApiURL := "https://" + username + ":" + apiKey + "@flightxml.flightaware.com/json/FlightXML2/"
 
-	aeroApiURLStr := NewInFlightInfoURL(aeroApiURL, flightNumber)
+	aeroApiURLStr := NewFlightInfoURL(aeroApiURL, flightNumber)
 
 	client := &http.Client{}
 	re, _ := http.NewRequest("POST", aeroApiURLStr, nil)
 
-	resp, _ := client.Do(re)
-
-	flightInfo := new(InFlightInfoResponse)
-	err := json.NewDecoder(resp.Body).Decode(&flightInfo)
+	resp, err := client.Do(re)
 	if err != nil {
 		return nil, err
 	}
-	if flightInfo.InFlightInfoResult.Origin == "" {
+
+	flightInfo := new(FlightInfoResponse)
+	err = json.NewDecoder(resp.Body).Decode(&flightInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	if flightInfo.FlightInfoResult.Flights[0].Ident == "" {
 		return nil, errors.New(fmt.Sprintf("Empty API response: %s", flightNumber))
 	}
 	return flightInfo, nil
+}
+
+func (f *FlightInfoResponse) GetfaFlightID() (string, error) {
+	username := viper.GetString("aeroapi_username")
+	apiKey := viper.GetString("aeroapi_apikey")
+	aeroApiURL := "https://" + username + ":" + apiKey + "@flightxml.flightaware.com/json/FlightXML2/"
+
+	aeroApiURLStr := NewFlightInfoExURL(aeroApiURL, f.FlightInfoResult.Flights[0].Ident, f.FlightInfoResult.Flights[0].FiledDeparturetime)
+
+	//TODO continue
+	return "", nil
 }
 
 func (f *InFlightInfoResponse) GetMetarExInfo() (*MetarExResponse, error) {
