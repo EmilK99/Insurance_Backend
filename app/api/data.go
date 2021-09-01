@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/url"
+	"regexp"
 )
 
 func NewFlightInfoURL(aeroApiURL, ident string) string {
@@ -16,12 +17,36 @@ func NewFlightInfoURL(aeroApiURL, ident string) string {
 	return fmt.Sprintf("%v", u)
 }
 
-func NewFlightInfoExURL(aeroApiURL, ident string, departureTime int) string {
+func NewFlightInfoExURL(aeroApiURL, ident string) string {
+	data := url.Values{}
+	data.Set("ident", ident)
+
+	u, _ := url.ParseRequestURI(aeroApiURL + FlightInfoEx)
+	u.RawQuery = data.Encode()
+
+	return fmt.Sprintf("%v", u)
+}
+
+func NewGetFlightIDURL(aeroApiURL, ident string, departureTime int) string {
 	data := url.Values{}
 	data.Set("ident", ident)
 	data.Set("departureTime", fmt.Sprint(departureTime))
 
-	u, _ := url.ParseRequestURI(aeroApiURL + FlightInfo)
+	u, _ := url.ParseRequestURI(aeroApiURL + GetFlightID)
+	u.RawQuery = data.Encode()
+
+	return fmt.Sprintf("%v", u)
+}
+
+func NewCancellationRateURL(aeroApiURL, ident string) string {
+	re := regexp.MustCompile("[A-Z]+")
+
+	data := url.Values{}
+	data.Set("time_period", "today")
+	data.Set("type_matching", "airline")
+	data.Set("ident_filter", re.FindAllString(ident, -1)[0])
+
+	u, _ := url.ParseRequestURI(aeroApiURL + CancellationStat)
 	u.RawQuery = data.Encode()
 
 	return fmt.Sprintf("%v", u)

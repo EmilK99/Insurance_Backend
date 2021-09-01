@@ -18,7 +18,7 @@ func CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	flightInfo, err := GetFlightInfo(req.FlightNumber)
+	flightInfo, err := GetFlightInfoEx(req.FlightNumber)
 	if err != nil {
 		log.Errorf("Unable to get flight info: %v", err)
 		w.WriteHeader(500)
@@ -26,9 +26,15 @@ func CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//TODO continue
-    flightInfoEx, err := GetFlightInfoEx(flightInfo.InFlightInfoResult.)
-	premium, err := flightInfo.CalculateFee(req.TicketPrice)
+	cancelRate, err := flightInfo.GetCancellationRate()
+	if err != nil {
+		log.Errorf("Unable to get cancellation rate: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	premium, err := flightInfo.CalculateFee(req.TicketPrice, cancelRate)
 	if err != nil {
 		log.Errorf("Unable to calculate fee: %v", err)
 		w.WriteHeader(500)

@@ -2,8 +2,10 @@ package api
 
 const (
 	FlightInfo            = "FlightInfo"
+	GetFlightID           = "GetFlightID"
 	FlightInfoEx          = "FlightInfoEx"
 	MetarEx               = "MetarEx"
+	CancellationStat      = "FlightCancellationStatistics"
 	RegisterAlertEndpoint = "RegisterAlertEndpoint"
 )
 
@@ -75,6 +77,51 @@ type FlightInfoResponse struct {
 	} `json:"FlightInfoResult"`
 }
 
+type FlightInfoExResponse struct {
+	FlightInfoExResult struct {
+		NextOffset int `json:"next_offset"`
+		Flights    []struct {
+			FaFlightID           string `json:"faFlightID"`
+			Ident                string `json:"ident"`
+			Aircrafttype         string `json:"aircrafttype"`
+			FiledEte             string `json:"filed_ete"`
+			FiledTime            int    `json:"filed_time"`
+			FiledDeparturetime   int    `json:"filed_departuretime"`
+			FiledAirspeedKts     int    `json:"filed_airspeed_kts"`
+			FiledAirspeedMach    string `json:"filed_airspeed_mach"`
+			FiledAltitude        int    `json:"filed_altitude"`
+			Route                string `json:"route"`
+			Actualdeparturetime  int    `json:"actualdeparturetime"`
+			Estimatedarrivaltime int    `json:"estimatedarrivaltime"`
+			Actualarrivaltime    int    `json:"actualarrivaltime"`
+			Diverted             string `json:"diverted"`
+			Origin               string `json:"origin"`
+			Destination          string `json:"destination"`
+			OriginName           string `json:"originName"`
+			OriginCity           string `json:"originCity"`
+			DestinationName      string `json:"destinationName"`
+			DestinationCity      string `json:"destinationCity"`
+		} `json:"flights"`
+	} `json:"FlightInfoExResult"`
+}
+
+type FlightCancellationStatisticsResponse struct {
+	FlightCancellationStatisticsResult struct {
+		TotalCancellationsWorldwide int    `json:"total_cancellations_worldwide"`
+		TotalCancellationsNational  int    `json:"total_cancellations_national"`
+		TotalDelaysWorldwide        int    `json:"total_delays_worldwide"`
+		TypeMatching                string `json:"type_matching"`
+		NumMatching                 int    `json:"num_matching"`
+		Matching                    []struct {
+			Ident         string `json:"ident"`
+			Description   string `json:"description"`
+			Cancellations int    `json:"cancellations"`
+			Delays        int    `json:"delays"`
+			Total         int    `json:"total"`
+		} `json:"matching"`
+	} `json:"FlightCancellationStatisticsResult"`
+}
+
 type MetarExResponse struct {
 	MetarExResult struct {
 		NextOffset int `json:"next_offset"`
@@ -85,11 +132,11 @@ type MetarExResponse struct {
 			CloudAltitude int     `json:"cloud_altitude"`
 			CloudType     string  `json:"cloud_type"`
 			Conditions    string  `json:"conditions"`
-			Pressure      int     `json:"pressure"`
+			Pressure      float64 `json:"pressure"`
 			TempAir       int     `json:"temp_air"`
 			TempDewpoint  int     `json:"temp_dewpoint"`
 			TempRelhum    int     `json:"temp_relhum"`
-			Visibility    float32 `json:"visibility"`
+			Visibility    float64 `json:"visibility"`
 			WindFriendly  string  `json:"wind_friendly"`
 			WindDirection int     `json:"wind_direction"`
 			WindSpeed     int     `json:"wind_speed"`

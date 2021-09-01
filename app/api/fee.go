@@ -10,12 +10,12 @@ import (
 	"strings"
 )
 
-func GetFlightInfo(flightNumber string) (*FlightInfoResponse, error) {
+func GetFlightInfoEx(flightNumber string) (*FlightInfoExResponse, error) {
 	username := viper.GetString("aeroapi_username")
 	apiKey := viper.GetString("aeroapi_apikey")
 	aeroApiURL := "https://" + username + ":" + apiKey + "@flightxml.flightaware.com/json/FlightXML2/"
 
-	aeroApiURLStr := NewFlightInfoURL(aeroApiURL, flightNumber)
+	aeroApiURLStr := NewFlightInfoExURL(aeroApiURL, flightNumber)
 
 	client := &http.Client{}
 	re, _ := http.NewRequest("POST", aeroApiURLStr, nil)
@@ -25,35 +25,60 @@ func GetFlightInfo(flightNumber string) (*FlightInfoResponse, error) {
 		return nil, err
 	}
 
-	flightInfo := new(FlightInfoResponse)
-	err = json.NewDecoder(resp.Body).Decode(&flightInfo)
+	flightInfoEx := new(FlightInfoExResponse)
+	err = json.NewDecoder(resp.Body).Decode(&flightInfoEx)
 	if err != nil {
 		return nil, err
 	}
 
-	if flightInfo.FlightInfoResult.Flights[0].Ident == "" {
+	if flightInfoEx.FlightInfoExResult.Flights[0].Ident == "" {
 		return nil, errors.New(fmt.Sprintf("Empty API response: %s", flightNumber))
 	}
-	return flightInfo, nil
+
+	if flightInfoEx.FlightInfoExResult.Flights[0].Actualarrivaltime != 0 {
+		return nil, errors.New(fmt.Sprintf("Flight already arrived: %s", flightNumber))
+	}
+
+	return flightInfoEx, nil
 }
 
-func (f *FlightInfoResponse) GetfaFlightID() (string, error) {
+func (f *FlightInfoExResponse) GetCancellationRate() (float32, error) {
+	username := viper.GetString("aeroapi_username")
+	apiKey := viper.GetString("aeroapi_apikey")
+	aeroApiURL := "https://" + username + ":" + apiKey + "@flightxml.flightaware.com/json/FlightXML2c/"
+
+	aeroApiURLStr := NewCancellationRateURL(aeroApiURL, f.FlightInfoExResult.Flights[0].Ident)
+
+	client := &http.Client{}
+	re, _ := http.NewRequest("POST", aeroApiURLStr, nil)
+
+	resp, err := client.Do(re)
+	if err != nil {
+		return 0, err
+	}
+
+	flightCancelRate := new(FlightCancellationStatisticsResponse)
+	err = json.NewDecoder(resp.Body).Decode(&flightCancelRate)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(flightCancelRate.FlightCancellationStatisticsResult.Matching) == 0 {
+		return 0.1, nil
+	}
+
+	cancelations := flightCancelRate.FlightCancellationStatisticsResult.Matching[0].Cancellations
+	total := flightCancelRate.FlightCancellationStatisticsResult.Matching[0].Total
+
+	return 100 * float32(cancelations) / float32(total), nil
+}
+
+func (f *FlightInfoExResponse) GetMetarExInfo() (*MetarExResponse, error) {
 	username := viper.GetString("aeroapi_username")
 	apiKey := viper.GetString("aeroapi_apikey")
 	aeroApiURL := "https://" + username + ":" + apiKey + "@flightxml.flightaware.com/json/FlightXML2/"
 
-	aeroApiURLStr := NewFlightInfoExURL(aeroApiURL, f.FlightInfoResult.Flights[0].Ident, f.FlightInfoResult.Flights[0].FiledDeparturetime)
-
-	//TODO continue
-	return "", nil
-}
-
-func (f *InFlightInfoResponse) GetMetarExInfo() (*MetarExResponse, error) {
-	username := viper.GetString("aeroapi_username")
-	apiKey := viper.GetString("aeroapi_apikey")
-	aeroApiURL := "https://" + username + ":" + apiKey + "@flightxml.flightaware.com/json/FlightXML2/"
-
-	aeroApiURLStr := NewMetarExURL(aeroApiURL, f.InFlightInfoResult.Origin)
+	aeroApiURLStr := NewMetarExURL(aeroApiURL, f.FlightInfoExResult.Flights[0].Origin)
 
 	re, _ := http.NewRequest("POST", aeroApiURLStr, nil)
 
@@ -71,8 +96,11 @@ func (f *InFlightInfoResponse) GetMetarExInfo() (*MetarExResponse, error) {
 	return metarEx, nil
 }
 
-func (f *InFlightInfoResponse) CalculateFee(ticketPrice float32) (float32, error) {
+func (f *FlightInfoExResponse) CalculateFee(ticketPrice, cancelRate float32) (float32, error) {
 	var fee float32
+	//cancel rate addition
+	fee += cancelRate * cancelRate / 2
+
 	//ticket price premium addition
 	if ticketPrice > 100 {
 		fee += 0.025 * (ticketPrice - 100)
@@ -84,7 +112,7 @@ func (f *InFlightInfoResponse) CalculateFee(ticketPrice float32) (float32, error
 		return 0, err
 	}
 	if len(metarEx.MetarExResult.Metar) == 0 {
-		return 0, errors.New(fmt.Sprintf("Unable to get weather conditions in: %s", f.InFlightInfoResult.Origin))
+		return 0, errors.New(fmt.Sprintf("Unable to get weather conditions in: %s", f.FlightInfoExResult.Flights[0].Origin))
 	}
 
 	windSpeed := metarEx.MetarExResult.Metar[0].WindSpeed
@@ -93,6 +121,8 @@ func (f *InFlightInfoResponse) CalculateFee(ticketPrice float32) (float32, error
 	if strings.Contains(strings.ToLower(metarEx.MetarExResult.Metar[0].CloudFriendly), "snow") {
 		fee += 7.5
 	}
+
+	log.Info(ticketPrice, cancelRate, windSpeed, fee)
 
 	return fee, nil
 }

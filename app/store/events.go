@@ -6,9 +6,9 @@ import (
 )
 
 func CheckStatus(flightTd string) {
-	flightInfo, err := api.GetInFlightInfo(flightTd)
+	flightInfo, err := api.GetFlightInfoEx(flightTd)
 	if err != nil {
 		log.Error(err)
 	}
-	log.Info(flightInfo.InFlightInfoResult.DepartureTime)
+	log.Info(flightInfo.FlightInfoExResult)
 }
