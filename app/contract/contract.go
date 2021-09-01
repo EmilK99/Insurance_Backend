@@ -32,13 +32,19 @@ func (c *Contract) CreateContract(pool *pgxpool.Pool) error {
 		return errors.New("Contract already exists")
 	}
 
-	flightInfo, err := api.GetInFlightInfo(c.FlightNumber)
+	flightInfo, err := api.GetFlightInfoEx(c.FlightNumber)
 	if err != nil {
 		log.Errorf("%s", err)
 		return err
 	}
 
-	c.Fee, err = flightInfo.CalculateFee(c.TicketPrice)
+	cancelRate, err := flightInfo.GetCancellationRate()
+	if err != nil {
+		log.Errorf("%s", err)
+		return err
+	}
+
+	c.Fee, err = flightInfo.CalculateFee(c.TicketPrice, cancelRate)
 	if err != nil {
 		log.Errorf("%s", err)
 		return err

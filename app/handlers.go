@@ -13,14 +13,14 @@ func (s server) initHandlers() http.Handler {
 			api.CalculateFeeHandler(w, r)
 		}).Methods("POST")
 
-	s.router.HandleFunc("/contract/payment",
+	s.router.HandleFunc("/api/contract/payment",
 		func(w http.ResponseWriter, r *http.Request) {
 			payments.HandleCreatePaymentIntent(s.store.pool, w, r)
 		}).Methods("POST")
 
 	s.router.HandleFunc("/webhook",
 		func(w http.ResponseWriter, r *http.Request) {
-			payments.HandleCreatePaymentIntent(s.store.pool, w, r)
+			payments.HandleStripeWebhook(s.store.pool, w, r)
 		}).Methods("POST")
 
 	//TODO: add query endpoint "/contracts"

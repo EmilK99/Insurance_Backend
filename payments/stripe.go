@@ -11,17 +11,21 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 )
 
 func HandleCreatePaymentIntent(pool *pgxpool.Pool, w http.ResponseWriter, r *http.Request) {
+	stripe.Key = "sk_test_51JSJMMEK56Gl43G4cACjvRgB6Cq0BUQTJooNmt456I0Qb9I52eQ0ibAzlMbxj01A2LbRs8U5RyZvVR1jFcopRjU500ILfJHteJ"
+
 	if r.Method != "POST" {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
 
 	var req struct {
+		UserID       string `json:"user_id"`
 		FlightNumber string `json:"flight_number"`
 		FlightDate   int64  `json:"flight_date"`
 	}
@@ -33,19 +37,19 @@ func HandleCreatePaymentIntent(pool *pgxpool.Pool, w http.ResponseWriter, r *htt
 	}
 
 	//TODO: get unique app id from header
-	var newContract = contract.Contract{UserID: "test", FlightNumber: req.FlightNumber, FlightDate: req.FlightDate}
+	var newContract = contract.Contract{UserID: req.UserID, FlightNumber: req.FlightNumber, FlightDate: req.FlightDate}
 
-	err := newContract.CreateContract(pool)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("Unable to create contract: %v", err)
-		return
-	}
-
+	//err := newContract.CreateContract(pool)
+	//if err != nil {
+	//	http.Error(w, err.Error(), http.StatusInternalServerError)
+	//	log.Printf("Unable to create contract: %v", err)
+	//	return
+	//}
+	newContract.Fee = rand.Float32() * 10
+	newContract.ID = 1
 	params := &stripe.PaymentIntentParams{
 		Amount:      stripe.Int64(int64(newContract.Fee * 100)),
 		Currency:    stripe.String(string(stripe.CurrencyUSD)),
-		Customer:    stripe.String(newContract.UserID),
 		Description: stripe.String(fmt.Sprint(newContract.ID)),
 	}
 
@@ -80,7 +84,6 @@ func writeJSON(w http.ResponseWriter, v interface{}) {
 }
 
 func HandleStripeWebhook(pool *pgxpool.Pool, w http.ResponseWriter, r *http.Request) {
-	//http.HandleFunc("/webhook", func(w http.ResponseWriter, req *http.Request) {
 	const MaxBodyBytes = int64(65536)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodyBytes)
 	payload, err := ioutil.ReadAll(r.Body)
