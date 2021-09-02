@@ -76,7 +76,7 @@ func HandleCreateContract(pool *pgxpool.Pool, w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	res := CreateContarctResponse{Fee: premium, ContractID: contract.ID}
+	res := CreateContractResponse{Fee: premium, ContractID: contract.ID}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {

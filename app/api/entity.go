@@ -28,7 +28,7 @@ type CreateContractRequest struct {
 	Delay        bool    `json:"delay"`
 }
 
-type CreateContarctResponse struct {
+type CreateContractResponse struct {
 	Fee        float32 `json:"fee"`
 	ContractID int     `json:"contract_id"`
 }

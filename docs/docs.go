@@ -5,7 +5,7 @@
 //     Schemes: http
 //     BasePath: /
 //     Version: 1.0.0
-//     Host: localhost
+//     Host: https://safe-beyond-32265.herokuapp.com/
 //
 //     Consumes:
 //     - application/json

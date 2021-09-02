@@ -24,4 +24,20 @@ type calculateParamsWrapper struct {
 }
 
 // swagger:route POST /api/contract/create Query idOfContractCreateEndpoint
-// Contract create returns
+// Contract create returns fee and contractID.
+// responses:
+//   200: createContractResponse
+
+// Fee calculated on the basis of flight data and contract id for payment.
+// swagger:response createContractResponse
+type createContractResponseWrapper struct {
+	// Contract information.
+	// in:body
+	Body api.CreateContractResponse
+}
+
+// swagger:parameters idOfContractCreateEndpoint
+type createContractParamsWrapper struct {
+	// in:body
+	Body api.CreateContractRequest
+}
