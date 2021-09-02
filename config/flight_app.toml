@@ -1,5 +1,5 @@
 loglevel = "debug"
 listen = "127.0.0.1:8089"
-db_url = "<db url>"
-aeroapi_username = "<your_username>"
-aeroapi_apikey = "<your_api_key>"
+db_url = "postgres://pjcknmgtzhsmok:9bfd98ae4e5034c6e8cac32173948bef0dca3222af6b04dc7491064f327be9e5@ec2-35-153-91-18.compute-1.amazonaws.com:5432/de9eoebtcrs2p0"
+aeroapi_username = "kyulevemil"
+aeroapi_apikey = "84ed2fbe7b1ff0cd96f240905758257595822df1"
