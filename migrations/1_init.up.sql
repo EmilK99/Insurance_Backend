@@ -1,8 +1,6 @@
 CREATE TABLE IF NOT EXISTS contracts
 (
-    id            integer default nextval('contracts_id_seq1'::regclass) not null
-        constraint contracts_pk
-            primary key,
+    id            serial            primary key,
     user_id       varchar                                           not null,
     flight_number varchar(10)                                                  not null,
     date          timestamp with time zone                               not null,
@@ -27,10 +25,10 @@ CREATE TABLE IF NOT EXISTS flights
 
 create table if not exists payments
 (
-    id          integer default nextval('table_name_id_seq'::regclass) not null
-        constraint table_name_pk
-            primary key,
-    contract_id integer                                                not null,
+    id          SERIAL            primary key,
+    contract_id integer                                                not null
+        constraint payments_fk
+            references contracts,
     pay_system  varchar                                                not null,
     customer_id varchar                                                not null
 );

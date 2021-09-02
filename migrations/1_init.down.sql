@@ -1,7 +1,7 @@
-DROP TABLE IF EXISTS contracts;
-
 DROP TABLE IF EXISTS flights;
 
 DROP TABLE IF EXISTS payments;
+
+DROP TABLE IF EXISTS contracts;
 
 DROP EXTENSION IF EXISTS "uuid-ossp";
