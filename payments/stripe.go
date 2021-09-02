@@ -27,7 +27,7 @@ func HandleCreatePaymentIntent(pool *pgxpool.Pool, w http.ResponseWriter, r *htt
 	var req struct {
 		UserID       string `json:"user_id"`
 		FlightNumber string `json:"flight_number"`
-		FlightDate   int64  `json:"flight_date"`
+		FlightDate   int    `json:"flight_date"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
