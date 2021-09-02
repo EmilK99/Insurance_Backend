@@ -31,8 +31,8 @@ func GetFlightInfoEx(flightNumber string) (*FlightInfoExResponse, error) {
 		return nil, err
 	}
 
-	if flightInfoEx.FlightInfoExResult.Flights[0].Ident == "" {
-		return nil, errors.New(fmt.Sprintf("Empty API response: %s", flightNumber))
+	if len(flightInfoEx.FlightInfoExResult.Flights) == 0 {
+		return nil, errors.New(fmt.Sprintf("Info about this flight doesn't exist: %s", flightNumber))
 	}
 
 	if flightInfoEx.FlightInfoExResult.Flights[0].Actualarrivaltime != 0 {
