@@ -31,8 +31,8 @@ func GetFlightInfoEx(flightNumber string) (*FlightInfoExResponse, error) {
 		return nil, err
 	}
 
-	if flightInfoEx.FlightInfoExResult.Flights[0].Ident == "" {
-		return nil, errors.New(fmt.Sprintf("Empty API response: %s", flightNumber))
+	if len(flightInfoEx.FlightInfoExResult.Flights) == 0 {
+		return nil, errors.New(fmt.Sprintf("Info about this flight doesn't exist: %s", flightNumber))
 	}
 
 	if flightInfoEx.FlightInfoExResult.Flights[0].Actualarrivaltime != 0 {
@@ -125,4 +125,20 @@ func (f *FlightInfoExResponse) CalculateFee(ticketPrice, cancelRate float32) (fl
 	log.Info(ticketPrice, cancelRate, windSpeed, fee)
 
 	return fee, nil
+}
+
+func Calculate(flightNumber string, ticketPrice float32) (float32, error) {
+	flightInfo, err := GetFlightInfoEx(flightNumber)
+	if err != nil {
+		log.Errorf("Unable to get flight info: %v", err)
+		return 0, err
+	}
+
+	cancelRate, err := flightInfo.GetCancellationRate()
+	if err != nil {
+		log.Errorf("Unable to get cancellation rate: %v", err)
+		return 0, err
+	}
+
+	return flightInfo.CalculateFee(ticketPrice, cancelRate)
 }

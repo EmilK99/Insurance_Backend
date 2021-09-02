@@ -14,10 +14,11 @@ definitions:
         type: string
         x-go-name: FlightNumber
       ticket_price:
-        type: string
+        format: float
+        type: number
         x-go-name: TicketPrice
     type: object
-    x-go-package: flight_app/api
+    x-go-package: flight_app/app/api
   CalculateFeeResponse:
     properties:
       fee:
@@ -25,8 +26,40 @@ definitions:
         type: number
         x-go-name: Fee
     type: object
-    x-go-package: flight_app/api
-host: localhost
+    x-go-package: flight_app/app/api
+  CreateContractRequest:
+    properties:
+      cancellation:
+        type: boolean
+        x-go-name: Cancellation
+      delay:
+        type: boolean
+        x-go-name: Delay
+      flight_number:
+        type: string
+        x-go-name: FlightNumber
+      ticket_price:
+        format: float
+        type: number
+        x-go-name: TicketPrice
+      user_id:
+        type: string
+        x-go-name: UserID
+    type: object
+    x-go-package: flight_app/app/api
+  CreateContractResponse:
+    properties:
+      contract_id:
+        format: int64
+        type: integer
+        x-go-name: ContractID
+      fee:
+        format: float
+        type: number
+        x-go-name: Fee
+    type: object
+    x-go-package: flight_app/app/api
+host: https://safe-beyond-32265.herokuapp.com/
 info:
   description: Documentation of our flight_app API.
   title: flight_app.
@@ -47,6 +80,20 @@ paths:
       summary: Calculate returns calculated fee.
       tags:
       - Query
+  /api/contract/create:
+    post:
+      operationId: idOfContractCreateEndpoint
+      parameters:
+      - in: body
+        name: Body
+        schema:
+          $ref: '#/definitions/CreateContractRequest'
+      responses:
+        "200":
+          $ref: '#/responses/createContractResponse'
+      summary: Contract create returns fee and contractID.
+      tags:
+      - Query
 produces:
 - application/json
 responses:
@@ -54,6 +101,10 @@ responses:
     description: Fee calculated on the basis of flight data.
     schema:
       $ref: '#/definitions/CalculateFeeResponse'
+  createContractResponse:
+    description: Fee calculated on the basis of flight data and contract id for payment.
+    schema:
+      $ref: '#/definitions/CreateContractResponse'
 schemes:
 - http
 securityDefinitions:
