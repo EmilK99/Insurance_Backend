@@ -126,3 +126,19 @@ func (f *FlightInfoExResponse) CalculateFee(ticketPrice, cancelRate float32) (fl
 
 	return fee, nil
 }
+
+func Calculate(flightNumber string, ticketPrice float32) (float32, error) {
+	flightInfo, err := GetFlightInfoEx(flightNumber)
+	if err != nil {
+		log.Errorf("Unable to get flight info: %v", err)
+		return 0, err
+	}
+
+	cancelRate, err := flightInfo.GetCancellationRate()
+	if err != nil {
+		log.Errorf("Unable to get cancellation rate: %v", err)
+		return 0, err
+	}
+
+	return flightInfo.CalculateFee(ticketPrice, cancelRate)
+}

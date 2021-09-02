@@ -7,16 +7,19 @@ import (
 )
 
 func (s server) initHandlers() http.Handler {
-
+	//fee calculation
 	s.router.HandleFunc("/api/calculate",
 		func(w http.ResponseWriter, r *http.Request) {
 			api.CalculateFeeHandler(w, r)
 		}).Methods("POST")
 
-	s.router.HandleFunc("/api/contract/payment",
+	//contract create
+	s.router.HandleFunc("/api/contract/create",
 		func(w http.ResponseWriter, r *http.Request) {
-			payments.HandleCreatePaymentIntent(s.store.pool, w, r)
+			api.HandleCreateContract(s.store.pool, w, r)
 		}).Methods("POST")
+
+	//get contracts
 
 	s.router.HandleFunc("/webhook",
 		func(w http.ResponseWriter, r *http.Request) {

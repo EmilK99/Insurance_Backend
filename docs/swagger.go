@@ -22,3 +22,6 @@ type calculateParamsWrapper struct {
 	// in:body
 	Body api.CalculateFeeRequest
 }
+
+// swagger:route POST /api/contract/create Query idOfContractCreateEndpoint
+// Contract create returns

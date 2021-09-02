@@ -2,9 +2,9 @@ package contract
 
 import (
 	"context"
-	"database/sql"
 	"errors"
-	"flight_app/app/api"
+	"fmt"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
 	"strconv"
@@ -20,39 +20,22 @@ func (c *Contract) CreateContract(pool *pgxpool.Pool) error {
 	defer conn.Release()
 
 	var check int
+	fmt.Printf("%+v\n", c)
 
 	err = conn.QueryRow(context.Background(),
-		"SELECT id FROM contracts WHERE user_id = $1, flight_number = $2, flight_date = $3", c.UserID, c.FlightNumber, c.FlightDate).Scan(&check)
-	if err != nil && err != sql.ErrNoRows {
-		log.Errorf("Unable to SELECT: %v\n", err)
-		return err
+		"SELECT id FROM contracts WHERE user_id = $1 AND flight_number = $2 AND flight_date = $3", c.UserID, c.FlightNumber, c.FlightDate).Scan(&check)
+	if err != nil {
+		if err != pgx.ErrNoRows {
+			return err
+		}
 	}
 	if check != 0 {
-		log.Errorf("Contract already exists")
 		return errors.New("Contract already exists")
 	}
 
-	flightInfo, err := api.GetFlightInfoEx(c.FlightNumber)
-	if err != nil {
-		log.Errorf("%s", err)
-		return err
-	}
-
-	cancelRate, err := flightInfo.GetCancellationRate()
-	if err != nil {
-		log.Errorf("%s", err)
-		return err
-	}
-
-	c.Fee, err = flightInfo.CalculateFee(c.TicketPrice, cancelRate)
-	if err != nil {
-		log.Errorf("%s", err)
-		return err
-	}
-
 	err = conn.QueryRow(context.Background(),
-		"INSERT INTO contract (user_id, flight_number, date, ticket_price, fee) VALUES ($1, $2, $3, $4, $5) RETURNING ID",
-		c.UserID, c.FlightNumber, c.Date, c.TicketPrice, c.Fee,
+		"INSERT INTO contracts (user_id, flight_number, flight_date, date, ticket_price, fee) VALUES ($1, $2, $3, $4, $5, $6) RETURNING ID",
+		c.UserID, c.FlightNumber, c.FlightDate, c.Date, c.TicketPrice, c.Fee,
 	).Scan(&c.ID)
 	if err != nil {
 		log.Errorf("Unable to INSERT: %v\n", err)
