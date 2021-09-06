@@ -2,7 +2,7 @@ package app
 
 import (
 	"flight_app/app/api"
-	"flight_app/payments"
+	"flight_app/app/contract"
 	"net/http"
 )
 
@@ -16,17 +16,14 @@ func (s server) initHandlers() http.Handler {
 	//contract create
 	s.router.HandleFunc("/api/contract/create",
 		func(w http.ResponseWriter, r *http.Request) {
-			api.HandleCreateContract(s.store.pool, w, r)
+			contract.HandleCreateContract(s.store.pool, w, r)
 		}).Methods("POST")
 
 	//get contracts
-
-	s.router.HandleFunc("/webhook",
+	s.router.HandleFunc("/api/contracts",
 		func(w http.ResponseWriter, r *http.Request) {
-			payments.HandleStripeWebhook(s.store.pool, w, r)
+			contract.HandleGetContracts(s.store.pool, w, r)
 		}).Methods("POST")
-
-	//TODO: add query endpoint "/contracts"
 
 	return s.router
 }

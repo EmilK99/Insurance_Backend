@@ -1,5 +1,5 @@
 loglevel = "debug"
-listen = "127.0.0.1:8089"
+listen = "127.0.0.1:8080"
 db_url = "<db url>"
 aeroapi_username = "<your_username>"
 aeroapi_apikey = "<your_api_key>"
