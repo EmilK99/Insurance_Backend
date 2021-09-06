@@ -20,19 +20,6 @@ type CalculateFeeResponse struct {
 	Fee float32 `json:"fee"`
 }
 
-type CreateContractRequest struct {
-	UserID       string  `json:"user_id"`
-	FlightNumber string  `json:"flight_number"`
-	TicketPrice  float32 `json:"ticket_price"`
-	Cancellation bool    `json:"cancellation"`
-	Delay        bool    `json:"delay"`
-}
-
-type CreateContarctResponse struct {
-	Fee        float32 `json:"fee"`
-	ContractID int     `json:"contract_id"`
-}
-
 type InFlightInfoResponse struct {
 	InFlightInfoResult struct {
 		FaFlightID        string  `json:"faFlightID"`

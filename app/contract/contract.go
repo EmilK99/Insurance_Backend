@@ -3,7 +3,6 @@ package contract
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
@@ -20,7 +19,6 @@ func (c *Contract) CreateContract(pool *pgxpool.Pool) error {
 	defer conn.Release()
 
 	var check int
-	fmt.Printf("%+v\n", c)
 
 	err = conn.QueryRow(context.Background(),
 		"SELECT id FROM contracts WHERE user_id = $1 AND flight_number = $2 AND flight_date = $3", c.UserID, c.FlightNumber, c.FlightDate).Scan(&check)
@@ -62,4 +60,45 @@ func VerifyPayment(pool *pgxpool.Pool, contractId string) error {
 		return err
 	}
 	return nil
+}
+
+func GetContracts(pool *pgxpool.Pool, userID string) ([]*ContractsInfo, error) {
+	conn, err := pool.Acquire(context.Background())
+	if err != nil {
+		log.Errorf("Unable to acquire a database connection: %v", err)
+		return nil, err
+	}
+	defer conn.Release()
+
+	var contracts []*ContractsInfo
+
+	rows, err := conn.Query(context.Background(), "SELECT flight_number, status, ticket_price FROM contracts WHERE user_id = $1", userID)
+	if err != nil {
+		log.Errorf("Unable to SELECT: %v\n", err)
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		row := new(ContractsInfo)
+		err := rows.Scan(&row.FlightNumber, &row.Status, &row.Reward)
+		if err != nil {
+			log.Errorf("Unable to scan: %v\n", err)
+			return nil, err
+		}
+
+		if row.Status != "cancelled" {
+			row.Reward = 0
+		}
+
+		contracts = append(contracts, row)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	return contracts, nil
 }
