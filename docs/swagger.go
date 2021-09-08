@@ -46,18 +46,18 @@ type createContractParamsWrapper struct {
 // swagger:route POST /api/contracts Query idOfGetContractEndpoint
 // GetContracts returns contracts of specified user
 // responses:
-//   200: getContractsResponse
+//   200: []ContractsInfo
 
 // Contracts returns with current status and paid reward
 // swagger:response createContractResponse
 type getContractsResponseWrapper struct {
 	// Contract information.
 	// in:body
-	Body contract.GetContractsReq
+	Body []contract.ContractsInfo
 }
 
 // swagger:parameters idOfGetContractEndpoint
 type getContractParamsWrapper struct {
 	// in:body
-	Body []contract.ContractsInfo
+	Body contract.GetContractsReq
 }
