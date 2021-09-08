@@ -2,6 +2,7 @@ package docs
 
 import (
 	"flight_app/app/api"
+	"flight_app/app/contract"
 )
 
 // swagger:route POST /api/calculate Query idOfCalculateEndpoint
@@ -33,11 +34,30 @@ type calculateParamsWrapper struct {
 type createContractResponseWrapper struct {
 	// Contract information.
 	// in:body
-	Body api.CreateContractResponse
+	Body contract.CreateContractResponse
 }
 
 // swagger:parameters idOfContractCreateEndpoint
 type createContractParamsWrapper struct {
 	// in:body
-	Body api.CreateContractRequest
+	Body contract.CreateContractRequest
+}
+
+// swagger:route POST /api/contracts Query idOfGetContractEndpoint
+// GetContracts returns contracts of specified user
+// responses:
+//   200: getContractsResponse
+
+// Contracts returns with current status and paid reward
+// swagger:response createContractResponse
+type getContractsResponseWrapper struct {
+	// Contract information.
+	// in:body
+	Body contract.GetContractsReq
+}
+
+// swagger:parameters idOfGetContractEndpoint
+type getContractParamsWrapper struct {
+	// in:body
+	Body []contract.ContractsInfo
 }
