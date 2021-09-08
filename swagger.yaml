@@ -27,6 +27,20 @@ definitions:
         x-go-name: Fee
     type: object
     x-go-package: flight_app/app/api
+  ContractsInfo:
+    properties:
+      flight_number:
+        type: string
+        x-go-name: FlightNumber
+      reward:
+        format: float
+        type: number
+        x-go-name: Reward
+      status:
+        type: string
+        x-go-name: Status
+    type: object
+    x-go-package: flight_app/app/contract
   CreateContractRequest:
     properties:
       cancellation:
@@ -46,7 +60,7 @@ definitions:
         type: string
         x-go-name: UserID
     type: object
-    x-go-package: flight_app/app/api
+    x-go-package: flight_app/app/contract
   CreateContractResponse:
     properties:
       contract_id:
@@ -58,7 +72,14 @@ definitions:
         type: number
         x-go-name: Fee
     type: object
-    x-go-package: flight_app/app/api
+    x-go-package: flight_app/app/contract
+  GetContractsReq:
+    properties:
+      user_id:
+        type: string
+        x-go-name: UserID
+    type: object
+    x-go-package: flight_app/app/contract
 host: https://safe-beyond-32265.herokuapp.com/
 info:
   description: Documentation of our flight_app API.
@@ -94,6 +115,24 @@ paths:
       summary: Contract create returns fee and contractID.
       tags:
       - Query
+  /api/contracts:
+    post:
+      description: GetContracts returns contracts of specified user
+      operationId: idOfGetContractEndpoint
+      parameters:
+      - in: body
+        name: Body
+        schema:
+          $ref: '#/definitions/GetContractsReq'
+      responses:
+        "200":
+          description: ContractsInfo
+          schema:
+            items:
+              $ref: '#/definitions/ContractsInfo'
+            type: array
+      tags:
+      - Query
 produces:
 - application/json
 responses:
@@ -102,9 +141,12 @@ responses:
     schema:
       $ref: '#/definitions/CalculateFeeResponse'
   createContractResponse:
-    description: Fee calculated on the basis of flight data and contract id for payment.
+    description: Contracts returns with current status and paid reward
     schema:
       $ref: '#/definitions/CreateContractResponse'
+      items:
+        $ref: '#/definitions/ContractsInfo'
+      type: array
 schemes:
 - http
 securityDefinitions:
