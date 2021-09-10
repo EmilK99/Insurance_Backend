@@ -148,3 +148,7 @@ type MetarExResponse struct {
 		} `json:"metar"`
 	} `json:"MetarExResult"`
 }
+
+type SetAlertResponse struct {
+	SetAlertResult int `json:"SetAlertResult"`
+}
