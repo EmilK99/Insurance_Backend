@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/json"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"net/http"
 )
@@ -24,7 +26,7 @@ func RegisterAlertsEndpoint(host string) error {
 	return nil
 }
 
-func SetAlerts(faFlightID string, contractID int) error {
+func SetAlerts(faFlightID string, contractID int) (int, error) {
 	username := viper.GetString("aeroapi_username")
 	apiKey := viper.GetString("aeroapi_apikey")
 	aeroApiURL := "https://" + username + ":" + apiKey + "@flightxml.flightaware.com/json/FlightXML2/"
@@ -34,14 +36,22 @@ func SetAlerts(faFlightID string, contractID int) error {
 	client := &http.Client{}
 	re, err := http.NewRequest("POST", aeroApiURLStr, nil)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	_, err = client.Do(re)
+	resp, err := client.Do(re)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	alertId := new(SetAlertResponse)
+
+	err = json.NewDecoder(resp.Body).Decode(&alertId)
+	if err != nil {
+		log.Errorf("Unable to decode json: %v", err)
+		return 0, err
+	}
+
+	return alertId.SetAlertResult, nil
 }
 
 func GetAlerts() error {
