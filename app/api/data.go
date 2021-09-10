@@ -70,7 +70,7 @@ func NewRegisterAlertEndpointURL(aeroApiURL, endpoint string) string {
 	data.Set("address", endpoint)
 	data.Add("format_type", "json/post")
 
-	u, _ := url.ParseRequestURI(aeroApiURL + MetarEx)
+	u, _ := url.ParseRequestURI(aeroApiURL + RegisterAlertEndpoint)
 	u.RawQuery = data.Encode()
 
 	return fmt.Sprintf("%v", u)

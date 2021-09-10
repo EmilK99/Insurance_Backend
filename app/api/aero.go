@@ -35,3 +35,7 @@ func CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func HandleAlertWebhook(w http.ResponseWriter, r *http.Request) {
+
+}

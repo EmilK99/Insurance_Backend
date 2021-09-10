@@ -25,5 +25,11 @@ func (s server) initHandlers() http.Handler {
 			contract.HandleGetContracts(s.store.pool, w, r)
 		}).Methods("POST")
 
+	//get contracts
+	s.router.HandleFunc("/api/alerts",
+		func(w http.ResponseWriter, r *http.Request) {
+			api.HandleAlertWebhook(w, r)
+		}).Methods("POST")
+
 	return s.router
 }
