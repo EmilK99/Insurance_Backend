@@ -74,7 +74,15 @@ func HandleCreateContract(pool *pgxpool.Pool, w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	res := CreateContractResponse{Fee: premium, ContractID: contract.ID}
+	alertID, err := api.SetAlerts(flightInfo.FlightInfoExResult.Flights[0].FaFlightID, contract.ID)
+	if err != nil {
+		log.Errorf("Unable to set alert: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	res := CreateContractResponse{Fee: premium, ContractID: contract.ID, AlertID: alertID}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {

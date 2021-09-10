@@ -36,6 +36,7 @@ type CreateContractRequest struct {
 type CreateContractResponse struct {
 	Fee        float32 `json:"fee"`
 	ContractID int     `json:"contract_id"`
+	AlertID    int     `json:"alert_id"`
 }
 
 type ContractsInfo struct {

@@ -7,6 +7,9 @@ const (
 	MetarEx               = "MetarEx"
 	CancellationStat      = "FlightCancellationStatistics"
 	RegisterAlertEndpoint = "RegisterAlertEndpoint"
+	SetAlert              = "SetAlert"
+	GetAlert              = "GetAlert"
+	DeleteAlert           = "DeleteAlert"
 )
 
 type CalculateFeeRequest struct {
@@ -144,4 +147,8 @@ type MetarExResponse struct {
 			RawData       string  `json:"raw_data"`
 		} `json:"metar"`
 	} `json:"MetarExResult"`
+}
+
+type SetAlertResponse struct {
+	SetAlertResult int `json:"SetAlertResult"`
 }
