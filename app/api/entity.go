@@ -7,6 +7,9 @@ const (
 	MetarEx               = "MetarEx"
 	CancellationStat      = "FlightCancellationStatistics"
 	RegisterAlertEndpoint = "RegisterAlertEndpoint"
+	SetAlert              = "SetAlert"
+	GetAlert              = "GetAlert"
+	DeleteAlert           = "DeleteAlert"
 )
 
 type CalculateFeeRequest struct {

@@ -75,3 +75,16 @@ func NewRegisterAlertEndpointURL(aeroApiURL, endpoint string) string {
 
 	return fmt.Sprintf("%v", u)
 }
+
+func NewSetAlertURL(aeroApiURL, faFlightId string, contractID int) string {
+	data := url.Values{}
+	data.Set("alert_id", fmt.Sprint(contractID))
+	data.Add("ident", faFlightId)
+	data.Add("channels", "{16 e_departure e_cancelled}")
+	data.Add("max_weekly", "1000")
+
+	u, _ := url.ParseRequestURI(aeroApiURL + SetAlert)
+	u.RawQuery = data.Encode()
+
+	return fmt.Sprintf("%v", u)
+}
