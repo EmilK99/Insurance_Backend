@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS contracts
     fee           numeric                                                not null,
     create_tx     text,
     payment       boolean default false,
-    flight_date   integer                                                not null
+    flight_date   integer                                                not null,
+    status varchar default 'waiting' not null
 );
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
