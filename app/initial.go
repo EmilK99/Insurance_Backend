@@ -13,11 +13,6 @@ import (
 	"strings"
 )
 
-type server struct {
-	store  *Store
-	router *mux.Router
-}
-
 var eventListeners = event.Listeners{
 	"checkStatus": event.CheckStatus,
 }
@@ -109,8 +104,4 @@ func Run(configPath string, skipMigration bool) {
 
 	//<-ctx.Done()
 	log.Info("HTTP server terminated")
-}
-
-func newServer(store *Store, router *mux.Router) server {
-	return server{store: store, router: router}
 }
