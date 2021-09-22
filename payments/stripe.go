@@ -3,7 +3,7 @@ package payments
 import (
 	"bytes"
 	"encoding/json"
-	"flight_app/app/contract"
+	"flight_app/app/store"
 	"fmt"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/stripe/stripe-go"
@@ -37,7 +37,7 @@ func HandleCreatePaymentIntent(pool *pgxpool.Pool, w http.ResponseWriter, r *htt
 	}
 
 	//TODO: get unique app id from header
-	var newContract = contract.Contract{UserID: req.UserID, FlightNumber: req.FlightNumber, FlightDate: req.FlightDate}
+	var newContract = store.Contract{UserID: req.UserID, FlightNumber: req.FlightNumber, FlightDate: req.FlightDate}
 
 	//err := newContract.CreateContract(pool)
 	//if err != nil {
@@ -113,7 +113,7 @@ func HandleStripeWebhook(pool *pgxpool.Pool, w http.ResponseWriter, r *http.Requ
 		}
 		fmt.Println("PaymentIntent was successful!")
 
-		err = contract.VerifyPayment(pool, paymentIntent.Description)
+		err = store.VerifyPayment(pool, paymentIntent.Description)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error verifying payment: %v\n", err)
 		}

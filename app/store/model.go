@@ -1,4 +1,4 @@
-package contract
+package store
 
 import "time"
 

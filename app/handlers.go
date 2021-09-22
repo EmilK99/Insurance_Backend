@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"flight_app/app/api"
-	"flight_app/app/contract"
+	"flight_app/app/store"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -15,7 +15,7 @@ import (
 
 func (s *server) HandleGetContracts(w http.ResponseWriter, r *http.Request) {
 
-	var req contract.GetContractsReq
+	var req store.GetContractsReq
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil { // bad request
@@ -24,7 +24,7 @@ func (s *server) HandleGetContracts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contracts, err := contract.GetContracts(s.store.pool, req.UserID)
+	contracts, err := s.store.GetContracts(req.UserID)
 	if err != nil {
 		w.WriteHeader(422)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
@@ -42,7 +42,7 @@ func (s *server) HandleGetContracts(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 
-	var req contract.CreateContractRequest
+	var req store.CreateContractRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil { // bad request
@@ -67,10 +67,10 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contr := contract.NewContract(req.UserID, req.FlightNumber, int(flightInfo.FlightInfoExResult.Flights[0].FiledDeparturetime),
+	contr := store.NewContract(req.UserID, req.FlightNumber, flightInfo.FlightInfoExResult.Flights[0].FiledDeparturetime,
 		req.TicketPrice, premium)
 
-	err = contr.CreateContract(s.store.pool)
+	err = s.store.CreateContract(&contr)
 	if err != nil {
 		log.Errorf("Unable to create contract: %v", err)
 		w.WriteHeader(500)
@@ -86,7 +86,7 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := contract.CreateContractResponse{Fee: premium, ContractID: contr.ID, AlertID: alertID}
+	res := store.CreateContractResponse{Fee: premium, ContractID: contr.ID, AlertID: alertID}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
@@ -145,9 +145,13 @@ func (s *server) IPNHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch values["txn_type"][0] {
-	case "payment_finished":
-		//TODO handle success webhook
-	case "payment_cancelled":
+	case "invoice_paid":
+		err := s.store.VerifyPayment(values["custom"][0], "Paypal", values["payer_email"][0])
+		if err != nil {
+			log.Println("Failed to verify", err)
+		}
+
+	case "invoice_cancelled", "invoice_refunded":
 		//TODO handle fail webhook
 	}
 

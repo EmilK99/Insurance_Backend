@@ -1,16 +1,17 @@
 package app
 
 import (
+	store2 "flight_app/app/store"
 	"github.com/gorilla/mux"
 	"net/http"
 )
 
 type server struct {
 	router *mux.Router
-	store  *Store
+	store  *store2.Store
 }
 
-func newServer(store *Store, router *mux.Router) server {
+func newServer(store *store2.Store, router *mux.Router) server {
 	return server{store: store, router: router}
 }
 
@@ -35,7 +36,7 @@ func (s server) initHandlers() http.Handler {
 	s.router.HandleFunc("/api/alerts/register", s.HandleRegisterAlertsEndpoint).Methods("GET")
 
 	//register webhook endpoint
-	s.router.HandleFunc("/api/ipn", s.IPNHandler).Methods("GET")
+	s.router.HandleFunc("/api/ipn", s.IPNHandler).Methods("POST")
 
 	return s.router
 }

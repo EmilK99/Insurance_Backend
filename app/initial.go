@@ -63,17 +63,15 @@ func Run(configPath string, skipMigration bool) {
 	}
 	defer pool.Close()
 
-	store := NewStore(pool)
+	store := event.NewStore(pool)
 
 	log.Infof("Connected!")
 
-	if !skipMigration {
-		conn, err := pool.Acquire(context.Background())
-		if err != nil {
-			log.Fatalf("Unable to acquire a database connection: %v", err)
-		}
-		conn.Release()
+	store.Conn, err = store.Pool.Acquire(context.Background())
+	if err != nil {
+		log.Fatalf("Unable to acquire a database connection: %v", err)
 	}
+	defer store.Conn.Release()
 
 	//ctx, cancel := context.WithCancel(context.Background())
 	//defer cancel()
