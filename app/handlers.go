@@ -146,6 +146,10 @@ func (s *server) IPNHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch values["txn_type"][0] {
 	case "invoice_paid":
+		err := s.store.VerifyPayment(values["custom"][0], "Paypal", values["payer_email"][0])
+		if err != nil {
+			log.Println("Failed to verify", err)
+		}
 
 	case "invoice_cancelled", "invoice_refunded":
 		//TODO handle fail webhook

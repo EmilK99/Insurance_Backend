@@ -36,7 +36,7 @@ func (s server) initHandlers() http.Handler {
 	s.router.HandleFunc("/api/alerts/register", s.HandleRegisterAlertsEndpoint).Methods("GET")
 
 	//register webhook endpoint
-	s.router.HandleFunc("/api/ipn", s.IPNHandler).Methods("GET")
+	s.router.HandleFunc("/api/ipn", s.IPNHandler).Methods("POST")
 
 	return s.router
 }

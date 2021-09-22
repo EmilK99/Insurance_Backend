@@ -34,7 +34,7 @@ func (s *Store) CreateContract(c *Contract) error {
 	return nil
 }
 
-func (s *Store) VerifyPayment(contractId string) error {
+func (s *Store) VerifyPayment(contractId, paySystem, customerID string) error {
 
 	id, _ := strconv.ParseInt(contractId, 10, 0)
 
@@ -42,9 +42,17 @@ func (s *Store) VerifyPayment(contractId string) error {
 		"UPDATE contract SET payment=true WHERE id=$1",
 		id)
 	if err != nil {
-		log.Errorf("Unable to INSERT: %v\n", err)
+		log.Errorf("Unable to UPDATE: %v\n", err)
 		return err
 	}
+
+	_, err = s.Conn.Exec(context.Background(),
+		"INSERT INTO payments (contract_id, pay_system, customer_id) VALUES ($1, $2, $3)", id, paySystem, customerID)
+	if err != nil {
+		log.Errorf("Unable to UPDATE: %v\n", err)
+		return err
+	}
+
 	return nil
 }
 
