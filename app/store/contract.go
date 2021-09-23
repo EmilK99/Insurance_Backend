@@ -90,3 +90,33 @@ func (s *Store) GetContracts(userID string) ([]*ContractsInfo, error) {
 
 	return contracts, nil
 }
+
+func (s *Store) GetPayouts(userID string) ([]*ContractsInfo, error) {
+
+	var contracts []*ContractsInfo
+	rows, err := s.Conn.Query(context.Background(), "SELECT flight_number, ticket_price FROM contracts WHERE user_id = $1 AND status = $2", userID, "cancelled")
+	if err != nil {
+		log.Errorf("Unable to SELECT: %v\n", err)
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		row := new(ContractsInfo)
+		err := rows.Scan(&row.FlightNumber, &row.Reward)
+		if err != nil {
+			log.Errorf("Unable to scan: %v\n", err)
+			return nil, err
+		}
+
+		contracts = append(contracts, row)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	return contracts, nil
+}

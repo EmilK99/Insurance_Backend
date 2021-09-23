@@ -29,6 +29,9 @@ func (s server) initHandlers() http.Handler {
 	//get contracts
 	s.router.HandleFunc("/api/contracts", s.HandleGetContracts).Methods("POST")
 
+	//get payout history
+	s.router.HandleFunc("/api/payouts", s.HandleGetPayouts).Methods("POST")
+
 	//alerts webhook
 	s.router.HandleFunc("/api/alerts", s.HandleAlertWebhook).Methods("POST")
 

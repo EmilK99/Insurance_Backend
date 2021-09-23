@@ -40,6 +40,44 @@ func (s *server) HandleGetContracts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *server) HandleGetPayouts(w http.ResponseWriter, r *http.Request) {
+
+	var req store.GetContractsReq
+
+	type response struct {
+		Contracts   []*store.ContractsInfo `json:"contracts"`
+		TotalPayout float32                `json:"total_payout"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil { // bad request
+		w.WriteHeader(400)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(400), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	contracts, err := s.store.GetPayouts(req.UserID)
+	if err != nil {
+		w.WriteHeader(422)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
+		return
+	}
+	var res response
+	res.Contracts = contracts
+
+	for i := range contracts {
+		res.TotalPayout += contracts[i].Reward
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		log.Errorf("Unable to encode json: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+}
+
 func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 
 	var req store.CreateContractRequest
