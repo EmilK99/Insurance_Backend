@@ -2,6 +2,7 @@ package app
 
 import (
 	store2 "flight_app/app/store"
+	"flight_app/payments"
 	"github.com/gorilla/mux"
 	"net/http"
 )
@@ -9,10 +10,12 @@ import (
 type server struct {
 	router *mux.Router
 	store  *store2.Store
+	client *payments.Client
+	port   string
 }
 
-func newServer(store *store2.Store, router *mux.Router) server {
-	return server{store: store, router: router}
+func newServer(store *store2.Store, router *mux.Router, port string) server {
+	return server{store: store, router: router, client: nil, port: port}
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -37,6 +40,9 @@ func (s server) initHandlers() http.Handler {
 
 	//register alerts
 	s.router.HandleFunc("/api/alerts/register", s.HandleRegisterAlertsEndpoint).Methods("GET")
+
+	//paypal redirect
+	s.router.HandleFunc("/api/paypal", s.HandleCreatePaypalOrder).Methods("GET")
 
 	//register webhook endpoint
 	s.router.HandleFunc("/api/ipn", s.IPNHandler).Methods("POST")

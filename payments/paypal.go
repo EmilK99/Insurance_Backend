@@ -2,6 +2,7 @@ package payments
 
 import (
 	"context"
+	"flight_app/app/store"
 	"fmt"
 	"github.com/plutov/paypal/v4"
 )
@@ -60,29 +61,28 @@ func (c *Client) CreatePayout(ctx context.Context, contractID int, userEmail str
 	return nil
 }
 
-func (c *Client) CreateOrder(ctx context.Context) error {
+func (c *Client) CreateOrder(ctx context.Context, contract *store.Contract, host string) error {
 	order, err := c.Client.CreateOrder(ctx,
 		paypal.OrderIntentCapture,
 		[]paypal.PurchaseUnitRequest{
 			{
-				InvoiceID:   "asd",
-				ReferenceID: "ref-id",
+				ReferenceID: fmt.Sprint(contract.ID),
 				Amount: &paypal.PurchaseUnitAmount{
-					Value:    "700.00",
+					Value:    fmt.Sprintf("%.2f", contract.Fee),
 					Currency: "USD",
 				},
 			},
 		},
 		nil,
 		&paypal.ApplicationContext{
-			ReturnURL: "https://google.com",
-			CancelURL: "https://yandex.ru",
+			ReturnURL: "http://" + host + ":8089/success",
+			CancelURL: "http://" + host + ":8089/cancel",
 		},
 	)
-
 	if err != nil {
-		return err
+		panic(err)
 	}
+
 	fmt.Println(*order)
 	return nil
 }

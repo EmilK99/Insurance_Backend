@@ -6,13 +6,14 @@ type Contract struct {
 	ID           int       `json:"id"`
 	UserID       string    `json:"user_id"`
 	FlightNumber string    `json:"flight_number"`
-	FlightDate   int       `json:"flight_date"`
+	FlightDate   int64     `json:"flight_date"`
 	Date         time.Time `json:"date"`
 	TicketPrice  float32   `json:"ticket_price"`
 	Fee          float32   `json:"fee"`
+	Status       string    `json:"status"`
 }
 
-func NewContract(userID, flightNumber string, flightDate int, ticketPrice, fee float32) Contract {
+func NewContract(userID, flightNumber string, flightDate int64, ticketPrice, fee float32) Contract {
 	return Contract{UserID: userID,
 		FlightNumber: flightNumber,
 		FlightDate:   flightDate,

@@ -56,7 +56,23 @@ func (s *Store) VerifyPayment(contractId, paySystem, customerID string) error {
 	return nil
 }
 
-func (s *Store) GetContracts(userID string) ([]*ContractsInfo, error) {
+func (s *Store) GetContract(contractID int) (*Contract, error) {
+	var contract = Contract{ID: contractID}
+
+	err := s.Conn.QueryRow(context.Background(),
+		"SELECT fee, status, flight_date FROM contracts WHERE id = $1", contract.ID).Scan(
+		&contract.Fee,
+		&contract.Status,
+		&contract.FlightDate)
+	if err != nil {
+		if err != pgx.ErrNoRows {
+			return nil, err
+		}
+	}
+	return &contract, nil
+}
+
+func (s *Store) GetContractsByUser(userID string) ([]*ContractsInfo, error) {
 
 	var contracts []*ContractsInfo
 

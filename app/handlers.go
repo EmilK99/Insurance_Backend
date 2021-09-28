@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 )
 
 func (s *server) HandleGetContracts(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +25,7 @@ func (s *server) HandleGetContracts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contracts, err := s.store.GetContracts(req.UserID)
+	contracts, err := s.store.GetContractsByUser(req.UserID)
 	if err != nil {
 		w.WriteHeader(422)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
@@ -105,7 +106,7 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contr := store.NewContract(req.UserID, req.FlightNumber, flightInfo.FlightInfoExResult.Flights[0].FiledDeparturetime,
+	contr := store.NewContract(req.UserID, req.FlightNumber, int64(flightInfo.FlightInfoExResult.Flights[0].FiledDeparturetime),
 		req.TicketPrice, premium)
 
 	err = s.store.CreateContract(&contr)
@@ -238,4 +239,37 @@ func (s *server) HandleRegisterAlertsEndpoint(w http.ResponseWriter, r *http.Req
 		return
 	}
 	w.WriteHeader(200)
+}
+
+func (s *server) HandleCreatePaypalOrder(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Errorf("Unable to register endpoint: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+	token, err := strconv.Atoi(r.Form.Get("contractID"))
+	if err != nil {
+		log.Errorf("Unable to parse contractID: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	contract, err := s.store.GetContract(token)
+	if err != nil {
+		log.Errorf("Failed to get contract: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	if time.Unix(contract.FlightDate, 0).Before(time.Now()) || contract.Status != "waiting" {
+		log.Error("Flight already departured or cancelled")
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": "Flight already departured or cancelled", "status": "Error"})
+		return
+	}
+
 }

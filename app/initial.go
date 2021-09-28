@@ -93,7 +93,12 @@ func Run(configPath string, skipMigration bool) {
 	log.Infof("Starting HTTP server at %s...", listenAddr)
 	router := mux.NewRouter()
 
-	srv := newServer(store, router)
+	srv := newServer(store, router, port)
+	err = srv.client.Initialize()
+	if err != nil {
+		log.Fatalf("Unable to initialize paypal client: %v", err)
+	}
+
 	router.Handle("/", cors.AllowAll().Handler(srv.initHandlers()))
 	err = http.ListenAndServe(":"+port, router)
 	if err != nil {
