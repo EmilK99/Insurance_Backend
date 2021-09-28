@@ -5,6 +5,7 @@ import (
 	"flight_app/app/store"
 	"fmt"
 	"github.com/plutov/paypal/v4"
+	"strconv"
 )
 
 type Client struct {
@@ -53,23 +54,24 @@ func (c *Client) CreatePayout(ctx context.Context, contractID int, userEmail str
 		},
 	}
 
-	res, err := c.Client.CreatePayout(ctx, payout)
+	_, err := c.Client.CreatePayout(ctx, payout)
 	if err != nil {
 		return err
 	}
-	fmt.Println(*res)
+	//fmt.Println(*res)
 	return nil
 }
 
-func (c *Client) CreateOrder(ctx context.Context, contract *store.Contract, returnURL, cancelURL string) (string, error) {
-	fmt.Println(returnURL, cancelURL)
+func (c *Client) CreateOrder(ctx context.Context, contract store.Contract, returnURL, cancelURL string) (string, error) {
+	//fmt.Println(returnURL, cancelURL)
+	value := fmt.Sprintf("%.2f", contract.Fee)
 	order, err := c.Client.CreateOrder(ctx,
 		paypal.OrderIntentCapture,
 		[]paypal.PurchaseUnitRequest{
 			{
-				ReferenceID: fmt.Sprint(contract.ID),
+				ReferenceID: strconv.Itoa(contract.ID),
 				Amount: &paypal.PurchaseUnitAmount{
-					Value:    fmt.Sprintf("%.2f", contract.Fee),
+					Value:    value,
 					Currency: "USD",
 				},
 			},
@@ -81,9 +83,9 @@ func (c *Client) CreateOrder(ctx context.Context, contract *store.Contract, retu
 		},
 	)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	fmt.Println(*order)
+	//fmt.Println(*order)
 	return order.Links[1].Href, nil
 }

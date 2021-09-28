@@ -10,6 +10,7 @@ type Contract struct {
 	Date         time.Time `json:"date"`
 	TicketPrice  float32   `json:"ticket_price"`
 	Fee          float32   `json:"fee"`
+	Payment      bool      `json:"payment"`
 	Status       string    `json:"status"`
 }
 
@@ -19,6 +20,7 @@ func NewContract(userID, flightNumber string, flightDate int64, ticketPrice, fee
 		FlightDate:   flightDate,
 		Date:         time.Now(),
 		TicketPrice:  ticketPrice,
+		Payment:      false,
 		Fee:          fee}
 }
 

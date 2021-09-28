@@ -3,9 +3,7 @@ package app
 import (
 	"context"
 	event "flight_app/app/store"
-	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v4"
-	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"net/http"
@@ -88,9 +86,8 @@ func Run(configPath string, skipMigration bool) {
 	}
 	listenAddr := viper.GetString("listen") + ":" + port
 	log.Infof("Starting HTTP server at %s...", listenAddr)
-	router := mux.NewRouter()
 
-	srv := newServer(store, router, ctx, port)
+	srv := newServer(store, ctx, port)
 	srv.client.ClientID = viper.GetString("client_id")
 	srv.client.SecretID = viper.GetString("secret_id")
 	err = srv.client.Initialize(ctx)
@@ -98,8 +95,9 @@ func Run(configPath string, skipMigration bool) {
 		log.Fatalf("Unable to initialize paypal client: %v", err)
 	}
 
-	router.Handle("/", cors.AllowAll().Handler(srv.initHandlers()))
-	err = http.ListenAndServe(":"+port, router)
+	srv.configureRouter()
+
+	err = http.ListenAndServe(":"+port, srv)
 	if err != nil {
 		log.Fatalf("http.ListenAndServe: %v", err)
 	}

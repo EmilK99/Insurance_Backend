@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flight_app/app/api"
 	"flight_app/app/store"
 	"flight_app/payments"
@@ -228,7 +229,6 @@ func (s *server) CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) HandleAlertWebhook(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.Body)
 	w.WriteHeader(200)
 }
 
@@ -267,13 +267,13 @@ func (s *server) HandleCreatePaypalOrder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if time.Unix(contract.FlightDate, 0).Before(time.Now()) || contract.Status != "waiting" {
-		log.Error("Flight already departured or cancelled")
+	if time.Unix(contract.FlightDate, 0).Before(time.Now()) || contract.Status != "waiting" || contract.Payment {
+		log.Error("Operation can't be done", errors.New("123"))
 		w.WriteHeader(500)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": "Flight already departured or cancelled", "status": "Error"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": errors.New("Flight already departured or cancelled").Error(), "status": "Error"})
 		return
 	}
-	returnUrl, cancelURL := api.GetSuccessCancelURL(r.Host, true)
+	returnUrl, cancelURL := api.GetSuccessCancelURL(r.Host, false)
 
 	href, err := s.client.CreateOrder(s.ctx, contract, returnUrl, cancelURL)
 	if err != nil {
@@ -289,32 +289,37 @@ func (s *server) HandleCreatePaypalOrder(w http.ResponseWriter, r *http.Request)
 func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		panic(err)
+		log.Error(err)
 	}
 	token := r.Form.Get("token")
 
 	req, err := s.client.Client.NewRequest(s.ctx, http.MethodPost, "https://api.sandbox.paypal.com/v2/checkout/orders/"+token+"/capture", nil)
 	if err != nil {
-		panic(err)
+		log.Error(err)
 	}
 
 	res := paypal.CaptureOrderResponse{}
 	err = s.client.Client.SendWithAuth(req, &res)
 	if err != nil {
-		panic(err)
+		log.Error(err)
 	}
 
-	fmt.Println(res.Status, res.ID, res.Payer.EmailAddress, res.PurchaseUnits[0].ReferenceID)
+	//fmt.Println(res.Status, res.ID, res.Payer.EmailAddress, res.PurchaseUnits[0].ReferenceID)
+
+	err = s.store.VerifyPayment(s.ctx, string(res.PurchaseUnits[0].ReferenceID), "Paypal", string(res.Payer.EmailAddress))
+	if err != nil {
+		log.Error(err)
+	}
 
 	err = payments.SuccessTemplate.Execute(w, nil)
 	if err != nil {
-		panic(err)
+		log.Error(err)
 	}
 }
 
 func HandlerCancel(w http.ResponseWriter, r *http.Request) {
 	err := payments.CancelTemplate.Execute(w, nil)
 	if err != nil {
-		panic(err)
+		log.Error(err)
 	}
 }

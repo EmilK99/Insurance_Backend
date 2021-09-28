@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/jackc/pgx/v4"
 	log "github.com/sirupsen/logrus"
-	"strconv"
 )
 
 func (s *Store) CreateContract(ctx context.Context, c *Contract) error {
@@ -36,40 +35,41 @@ func (s *Store) CreateContract(ctx context.Context, c *Contract) error {
 
 func (s *Store) VerifyPayment(ctx context.Context, contractId, paySystem, customerID string) error {
 
-	id, _ := strconv.ParseInt(contractId, 10, 0)
-
-	_, err := s.Conn.Exec(ctx,
-		"UPDATE contract SET payment=true WHERE id=$1",
-		id)
-	if err != nil {
-		log.Errorf("Unable to UPDATE: %v\n", err)
-		return err
-	}
-
-	_, err = s.Conn.Exec(ctx,
-		"INSERT INTO payments (contract_id, pay_system, customer_id) VALUES ($1, $2, $3)", id, paySystem, customerID)
-	if err != nil {
-		log.Errorf("Unable to UPDATE: %v\n", err)
-		return err
-	}
+	//id, _ := strconv.ParseInt(contractId, 10, 64)
+	//
+	//_, err := s.Conn.Exec(ctx,
+	//	"UPDATE contracts SET payment=true WHERE id=$1",
+	//	id)
+	//if err != nil {
+	//	log.Errorf("Unable to UPDATE: %v\n", err)
+	//	return err
+	//}
+	//
+	//_, err = s.Conn.Exec(ctx,
+	//	"INSERT INTO payments (contract_id, pay_system, customer_id) VALUES ($1, $2, $3)", id, paySystem, customerID)
+	//if err != nil {
+	//	log.Errorf("Unable to UPDATE: %v\n", err)
+	//	return err
+	//}
 
 	return nil
 }
 
-func (s *Store) GetContract(ctx context.Context, contractID int) (*Contract, error) {
+func (s *Store) GetContract(ctx context.Context, contractID int) (Contract, error) {
 	var contract = Contract{ID: contractID}
 
 	err := s.Conn.QueryRow(ctx,
-		"SELECT fee, status, flight_date FROM contracts WHERE id = $1", contract.ID).Scan(
+		"SELECT fee, status, flight_date, payment FROM contracts WHERE id = $1", contract.ID).Scan(
 		&contract.Fee,
 		&contract.Status,
-		&contract.FlightDate)
+		&contract.FlightDate,
+		&contract.Payment)
 	if err != nil {
 		if err != pgx.ErrNoRows {
-			return nil, err
+			return Contract{}, err
 		}
 	}
-	return &contract, nil
+	return contract, nil
 }
 
 func (s *Store) GetContractsByUser(ctx context.Context, userID string) ([]*ContractsInfo, error) {
