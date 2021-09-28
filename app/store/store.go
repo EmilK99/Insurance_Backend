@@ -1,16 +1,15 @@
 package store
 
 import (
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v4"
 )
 
 type Store struct {
-	Pool *pgxpool.Pool
-	Conn *pgxpool.Conn
+	Conn *pgx.Conn
 }
 
-func NewStore(pool *pgxpool.Pool) *Store {
-	return &Store{Pool: pool}
+func NewStore(conn *pgx.Conn) *Store {
+	return &Store{Conn: conn}
 }
 
 func (s Store) FindContracts(user_id string) ([]Contract, error) {

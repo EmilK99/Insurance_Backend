@@ -6,6 +6,17 @@ import (
 	"regexp"
 )
 
+func GetSuccessCancelURL(host string, tls bool) (string, string) {
+	var url string
+	if tls {
+		url += "https://"
+	} else {
+		url += "http://"
+	}
+	url += host
+	return url + "/api/success", url + "/api/cancel"
+}
+
 func NewFlightInfoURL(aeroApiURL, ident string) string {
 	data := url.Values{}
 	data.Set("ident", ident)

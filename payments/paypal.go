@@ -13,7 +13,7 @@ type Client struct {
 	SecretID string
 }
 
-func (c *Client) Initialize() error {
+func (c *Client) Initialize(ctx context.Context) error {
 	// Initialize client
 	var err error
 	c.Client, err = paypal.NewClient(c.ClientID, c.SecretID, paypal.APIBaseSandBox)
@@ -22,7 +22,7 @@ func (c *Client) Initialize() error {
 	}
 
 	// Retrieve access token
-	_, err = c.Client.GetAccessToken(context.Background())
+	_, err = c.Client.GetAccessToken(ctx)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,8 @@ func (c *Client) CreatePayout(ctx context.Context, contractID int, userEmail str
 	return nil
 }
 
-func (c *Client) CreateOrder(ctx context.Context, contract *store.Contract, host string) error {
+func (c *Client) CreateOrder(ctx context.Context, contract *store.Contract, returnURL, cancelURL string) (string, error) {
+	fmt.Println(returnURL, cancelURL)
 	order, err := c.Client.CreateOrder(ctx,
 		paypal.OrderIntentCapture,
 		[]paypal.PurchaseUnitRequest{
@@ -75,8 +76,8 @@ func (c *Client) CreateOrder(ctx context.Context, contract *store.Contract, host
 		},
 		nil,
 		&paypal.ApplicationContext{
-			ReturnURL: "http://" + host + ":8089/success",
-			CancelURL: "http://" + host + ":8089/cancel",
+			ReturnURL: returnURL,
+			CancelURL: cancelURL,
 		},
 	)
 	if err != nil {
@@ -84,5 +85,5 @@ func (c *Client) CreateOrder(ctx context.Context, contract *store.Contract, host
 	}
 
 	fmt.Println(*order)
-	return nil
+	return order.Links[1].Href, nil
 }

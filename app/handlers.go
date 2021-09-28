@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"flight_app/app/api"
 	"flight_app/app/store"
+	"flight_app/payments"
 	"fmt"
+	"github.com/plutov/paypal/v4"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -25,7 +27,7 @@ func (s *server) HandleGetContracts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contracts, err := s.store.GetContractsByUser(req.UserID)
+	contracts, err := s.store.GetContractsByUser(s.ctx, req.UserID)
 	if err != nil {
 		w.WriteHeader(422)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
@@ -57,7 +59,7 @@ func (s *server) HandleGetPayouts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contracts, err := s.store.GetPayouts(req.UserID)
+	contracts, err := s.store.GetPayouts(s.ctx, req.UserID)
 	if err != nil {
 		w.WriteHeader(422)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
@@ -109,7 +111,7 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 	contr := store.NewContract(req.UserID, req.FlightNumber, int64(flightInfo.FlightInfoExResult.Flights[0].FiledDeparturetime),
 		req.TicketPrice, premium)
 
-	err = s.store.CreateContract(&contr)
+	err = s.store.CreateContract(s.ctx, &contr)
 	if err != nil {
 		log.Errorf("Unable to create contract: %v", err)
 		w.WriteHeader(500)
@@ -185,7 +187,7 @@ func (s *server) IPNHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch values["txn_type"][0] {
 	case "invoice_paid":
-		err := s.store.VerifyPayment(values["custom"][0], "Paypal", values["payer_email"][0])
+		err := s.store.VerifyPayment(s.ctx, values["custom"][0], "Paypal", values["payer_email"][0])
 		if err != nil {
 			log.Println("Failed to verify", err)
 		}
@@ -257,7 +259,7 @@ func (s *server) HandleCreatePaypalOrder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	contract, err := s.store.GetContract(token)
+	contract, err := s.store.GetContract(s.ctx, token)
 	if err != nil {
 		log.Errorf("Failed to get contract: %v", err)
 		w.WriteHeader(500)
@@ -271,5 +273,48 @@ func (s *server) HandleCreatePaypalOrder(w http.ResponseWriter, r *http.Request)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": "Flight already departured or cancelled", "status": "Error"})
 		return
 	}
+	returnUrl, cancelURL := api.GetSuccessCancelURL(r.Host, false)
 
+	href, err := s.client.CreateOrder(s.ctx, contract, returnUrl, cancelURL)
+	if err != nil {
+		log.Errorf("Failed to get contract: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	http.Redirect(w, r, href, 301)
+}
+
+func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		panic(err)
+	}
+	token := r.Form.Get("token")
+
+	req, err := s.client.Client.NewRequest(s.ctx, http.MethodPost, "https://api.sandbox.paypal.com/v2/checkout/orders/"+token+"/capture", nil)
+	if err != nil {
+		panic(err)
+	}
+
+	res := paypal.CaptureOrderResponse{}
+	err = s.client.Client.SendWithAuth(req, &res)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(res.Status, res.ID, res.Payer.EmailAddress, res.PurchaseUnits[0].ReferenceID)
+
+	err = payments.SuccessTemplate.Execute(w, nil)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func HandlerCancel(w http.ResponseWriter, r *http.Request) {
+	err := payments.CancelTemplate.Execute(w, nil)
+	if err != nil {
+		panic(err)
+	}
 }
