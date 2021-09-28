@@ -3,9 +3,7 @@ package app
 import (
 	"context"
 	event "flight_app/app/store"
-	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/rs/cors"
+	"github.com/jackc/pgx/v4"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"net/http"
@@ -54,24 +52,21 @@ func Run(configPath string, skipMigration bool) {
 
 	log.SetLevel(logLevel)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	dbURL := viper.GetString("db_url")
 	log.Infof("Using DB URL: %s", dbURL)
 
-	pool, err := pgxpool.Connect(context.Background(), dbURL)
+	conn, err := pgx.Connect(ctx, dbURL)
 	if err != nil {
 		log.Fatalf("Unable to connection to database: %v", err)
 	}
-	defer pool.Close()
+	defer conn.Close(ctx)
 
-	store := event.NewStore(pool)
+	store := event.NewStore(conn)
 
 	log.Infof("Connected!")
-
-	store.Conn, err = store.Pool.Acquire(context.Background())
-	if err != nil {
-		log.Fatalf("Unable to acquire a database connection: %v", err)
-	}
-	defer store.Conn.Release()
 
 	//ctx, cancel := context.WithCancel(context.Background())
 	//defer cancel()
@@ -91,11 +86,18 @@ func Run(configPath string, skipMigration bool) {
 	}
 	listenAddr := viper.GetString("listen") + ":" + port
 	log.Infof("Starting HTTP server at %s...", listenAddr)
-	router := mux.NewRouter()
 
-	srv := newServer(store, router)
-	router.Handle("/", cors.AllowAll().Handler(srv.initHandlers()))
-	err = http.ListenAndServe(":"+port, router)
+	srv := newServer(store, ctx, port)
+	srv.client.ClientID = viper.GetString("client_id")
+	srv.client.SecretID = viper.GetString("secret_id")
+	err = srv.client.Initialize(ctx)
+	if err != nil {
+		log.Fatalf("Unable to initialize paypal client: %v", err)
+	}
+
+	srv.configureRouter()
+
+	err = http.ListenAndServe(":"+port, srv)
 	if err != nil {
 		log.Fatalf("http.ListenAndServe: %v", err)
 	}

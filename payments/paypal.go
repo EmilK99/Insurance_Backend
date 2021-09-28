@@ -2,8 +2,10 @@ package payments
 
 import (
 	"context"
+	"flight_app/app/store"
 	"fmt"
 	"github.com/plutov/paypal/v4"
+	"strconv"
 )
 
 type Client struct {
@@ -12,7 +14,7 @@ type Client struct {
 	SecretID string
 }
 
-func (c *Client) Initialize() error {
+func (c *Client) Initialize(ctx context.Context) error {
 	// Initialize client
 	var err error
 	c.Client, err = paypal.NewClient(c.ClientID, c.SecretID, paypal.APIBaseSandBox)
@@ -21,7 +23,7 @@ func (c *Client) Initialize() error {
 	}
 
 	// Retrieve access token
-	_, err = c.Client.GetAccessToken(context.Background())
+	_, err = c.Client.GetAccessToken(ctx)
 	if err != nil {
 		return err
 	}
@@ -52,37 +54,38 @@ func (c *Client) CreatePayout(ctx context.Context, contractID int, userEmail str
 		},
 	}
 
-	res, err := c.Client.CreatePayout(ctx, payout)
+	_, err := c.Client.CreatePayout(ctx, payout)
 	if err != nil {
 		return err
 	}
-	fmt.Println(*res)
+	//fmt.Println(*res)
 	return nil
 }
 
-func (c *Client) CreateOrder(ctx context.Context) error {
+func (c *Client) CreateOrder(ctx context.Context, contract store.Contract, returnURL, cancelURL string) (string, error) {
+	//fmt.Println(returnURL, cancelURL)
+	value := fmt.Sprintf("%.2f", contract.Fee)
 	order, err := c.Client.CreateOrder(ctx,
 		paypal.OrderIntentCapture,
 		[]paypal.PurchaseUnitRequest{
 			{
-				InvoiceID:   "asd",
-				ReferenceID: "ref-id",
+				ReferenceID: strconv.Itoa(contract.ID),
 				Amount: &paypal.PurchaseUnitAmount{
-					Value:    "700.00",
+					Value:    value,
 					Currency: "USD",
 				},
 			},
 		},
 		nil,
 		&paypal.ApplicationContext{
-			ReturnURL: "https://google.com",
-			CancelURL: "https://yandex.ru",
+			ReturnURL: returnURL,
+			CancelURL: cancelURL,
 		},
 	)
-
 	if err != nil {
-		return err
+		return "", err
 	}
-	fmt.Println(*order)
-	return nil
+
+	//fmt.Println(*order)
+	return order.Links[1].Href, nil
 }

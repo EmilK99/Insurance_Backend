@@ -22,12 +22,14 @@ func (s Scheduler) AddListener(event string, listenFunc ListenFunc) {
 type ListenFunc func(string)
 
 type Scheduler struct {
+	ctx       context.Context
 	pool      *pgxpool.Pool
 	listeners Listeners
 }
 
-func NewScheduler(pool *pgxpool.Pool, listeners Listeners) Scheduler {
+func NewScheduler(ctx context.Context, pool *pgxpool.Pool, listeners Listeners) Scheduler {
 	return Scheduler{
+		ctx:       ctx,
 		pool:      pool,
 		listeners: listeners,
 	}
@@ -35,7 +37,7 @@ func NewScheduler(pool *pgxpool.Pool, listeners Listeners) Scheduler {
 
 func (s Scheduler) Schedule(event, flightId string, runAt time.Time) {
 	log.Print("🚀 Scheduling event ", event, " to run at ", runAt)
-	_, err := s.pool.Exec(context.Background(), `INSERT INTO "public"."flights" ("name", "flight_id", "runAt") VALUES ($1, $2, $3)`, event, flightId, runAt)
+	_, err := s.pool.Exec(s.ctx, `INSERT INTO "public"."flights" ("name", "flight_id", "runAt") VALUES ($1, $2, $3)`, event, flightId, runAt)
 	if err != nil {
 		log.Print("schedule insert error: ", err)
 	}
@@ -43,7 +45,7 @@ func (s Scheduler) Schedule(event, flightId string, runAt time.Time) {
 
 func (s Scheduler) checkDueEvents() []Event {
 	events := []Event{}
-	rows, err := s.pool.Query(context.Background(), `SELECT "id", "name", "flight_id" FROM "public"."flights" WHERE "runAt" < $1`, time.Now())
+	rows, err := s.pool.Query(s.ctx, `SELECT "id", "name", "flight_id" FROM "public"."flights" WHERE "runAt" < $1`, time.Now())
 	if err != nil {
 		log.Print("💀 error: ", err)
 		return nil
@@ -60,7 +62,7 @@ func (s Scheduler) callListeners(event Event) {
 	eventFn, ok := s.listeners[event.Name]
 	if ok {
 		go eventFn(event.FlightId)
-		_, err := s.pool.Exec(context.Background(), `DELETE FROM "public"."flights" WHERE "id" = $1`, event.ID)
+		_, err := s.pool.Exec(s.ctx, `DELETE FROM "public"."flights" WHERE "id" = $1`, event.ID)
 		if err != nil {
 			log.Print("💀 error: ", err)
 		}

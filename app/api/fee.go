@@ -132,7 +132,7 @@ func Calculate(flightNumber string, ticketPrice float32) (float32, error) {
 		return 0, err
 	}
 
-	fmt.Println(flightInfo.FlightInfoExResult.Flights[0].FaFlightID)
+	//fmt.Println(flightInfo.FlightInfoExResult.Flights[0].FaFlightID)
 
 	cancelRate, err := flightInfo.GetCancellationRate()
 	if err != nil {
