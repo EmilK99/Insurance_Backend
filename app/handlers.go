@@ -273,7 +273,7 @@ func (s *server) HandleCreatePaypalOrder(w http.ResponseWriter, r *http.Request)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": "Flight already departured or cancelled", "status": "Error"})
 		return
 	}
-	returnUrl, cancelURL := api.GetSuccessCancelURL(r.Host, false)
+	returnUrl, cancelURL := api.GetSuccessCancelURL(r.Host, true)
 
 	href, err := s.client.CreateOrder(s.ctx, contract, returnUrl, cancelURL)
 	if err != nil {
