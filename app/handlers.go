@@ -120,7 +120,7 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	alertID, err := api.SetAlerts(flightInfo.FlightInfoExResult.Flights[0].FaFlightID, contr.ID)
+	_, err = api.SetAlerts(flightInfo.FlightInfoExResult.Flights[0].FaFlightID, contr.ID)
 	if err != nil {
 		log.Errorf("Unable to set alert: %v", err)
 		w.WriteHeader(500)
@@ -128,14 +128,23 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := store.CreateContractResponse{Fee: premium, ContractID: contr.ID, AlertID: alertID}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	err = json.NewEncoder(w).Encode(res)
-	if err != nil {
-		log.Errorf("Unable to encode json: %v", err)
+	if time.Unix(contr.FlightDate, 0).Before(time.Now()) {
+		log.Error("Operation can't be done", errors.New("123"))
 		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": errors.New("Flight already departured or cancelled").Error(), "status": "Error"})
 		return
 	}
+	returnUrl, cancelURL := api.GetSuccessCancelURL(r.Host, false)
+
+	href, err := s.client.CreateOrder(s.ctx, contr, returnUrl, cancelURL)
+	if err != nil {
+		log.Errorf("Failed to get contract: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	http.Redirect(w, r, href, 301)
 }
 
 func (s *server) IPNHandler(w http.ResponseWriter, r *http.Request) {
@@ -243,49 +252,6 @@ func (s *server) HandleRegisterAlertsEndpoint(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(200)
 }
 
-func (s *server) HandleCreatePaypalOrder(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		log.Errorf("Unable to register endpoint: %v", err)
-		w.WriteHeader(500)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
-		return
-	}
-	token, err := strconv.Atoi(r.Form.Get("contractID"))
-	if err != nil {
-		log.Errorf("Unable to parse contractID: %v", err)
-		w.WriteHeader(500)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
-		return
-	}
-
-	contract, err := s.store.GetContract(s.ctx, token)
-	if err != nil {
-		log.Errorf("Failed to get contract: %v", err)
-		w.WriteHeader(500)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
-		return
-	}
-
-	if time.Unix(contract.FlightDate, 0).Before(time.Now()) || contract.Status != "waiting" || contract.Payment {
-		log.Error("Operation can't be done", errors.New("123"))
-		w.WriteHeader(500)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": errors.New("Flight already departured or cancelled").Error(), "status": "Error"})
-		return
-	}
-	returnUrl, cancelURL := api.GetSuccessCancelURL(r.Host, false)
-
-	href, err := s.client.CreateOrder(s.ctx, contract, returnUrl, cancelURL)
-	if err != nil {
-		log.Errorf("Failed to get contract: %v", err)
-		w.WriteHeader(500)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
-		return
-	}
-
-	http.Redirect(w, r, href, 301)
-}
-
 func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -293,20 +259,58 @@ func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 	}
 	token := r.Form.Get("token")
 
-	req, err := s.client.Client.NewRequest(s.ctx, http.MethodPost, "https://api.sandbox.paypal.com/v2/checkout/orders/"+token+"/capture", nil)
+	req, err := s.client.Client.NewRequest(s.ctx, http.MethodPost, "https://api-m.paypal.com/v2/checkout/orders/"+token, nil)
 	if err != nil {
 		log.Error(err)
 	}
 
-	res := paypal.CaptureOrderResponse{}
+	res := paypal.Order{}
 	err = s.client.Client.SendWithAuth(req, &res)
 	if err != nil {
 		log.Error(err)
 	}
 
-	//fmt.Println(res.Status, res.ID, res.Payer.EmailAddress, res.PurchaseUnits[0].ReferenceID)
+	contractID, err := strconv.Atoi(res.PurchaseUnits[0].ReferenceID)
+	if err != nil {
+		log.Errorf("Unable to parse contractID: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
 
-	err = s.store.VerifyPayment(s.ctx, string(res.PurchaseUnits[0].ReferenceID), "Paypal", string(res.Payer.EmailAddress))
+	contract, err := s.store.GetContract(s.ctx, contractID)
+	if err != nil {
+		log.Errorf("Failed to get contract: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	if contract.Status != "waiting" || time.Unix(contract.FlightDate, 0).Before(time.Now()) {
+		_, err = s.store.Conn.Exec(s.ctx,
+			"DELETE FROM contracts WHERE id=$1",
+			contractID)
+		if err != nil {
+			log.Errorf("Unable to UPDATE: %v\n", err)
+			return
+		}
+
+		log.Errorf("Flight info already changed: %v", err)
+		return
+	}
+
+	req, err = s.client.Client.NewRequest(s.ctx, http.MethodPost, "https://api.sandbox.paypal.com/v2/checkout/orders/"+token+"/capture", nil)
+	if err != nil {
+		log.Error(err)
+	}
+
+	resp := paypal.CaptureOrderResponse{}
+	err = s.client.Client.SendWithAuth(req, &resp)
+	if err != nil {
+		log.Error(err)
+	}
+
+	err = s.store.VerifyPayment(s.ctx, res.PurchaseUnits[0].ReferenceID, "Paypal", res.Payer.EmailAddress)
 	if err != nil {
 		log.Error(err)
 	}
@@ -317,8 +321,41 @@ func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandlerCancel(w http.ResponseWriter, r *http.Request) {
-	err := payments.CancelTemplate.Execute(w, nil)
+func (s *server) HandlerCancel(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Error(err)
+	}
+	token := r.Form.Get("token")
+
+	req, err := s.client.Client.NewRequest(s.ctx, http.MethodPost, "https://api-m.paypal.com/v2/checkout/orders/"+token, nil)
+	if err != nil {
+		log.Error(err)
+	}
+
+	res := paypal.Order{}
+	err = s.client.Client.SendWithAuth(req, &res)
+	if err != nil {
+		log.Error(err)
+	}
+
+	contractID, err := strconv.Atoi(res.PurchaseUnits[0].ReferenceID)
+	if err != nil {
+		log.Errorf("Unable to parse contractID: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	_, err = s.store.Conn.Exec(s.ctx,
+		"DELETE FROM contracts WHERE id=$1",
+		contractID)
+	if err != nil {
+		log.Errorf("Unable to UPDATE: %v\n", err)
+		return
+	}
+
+	err = payments.CancelTemplate.Execute(w, nil)
 	if err != nil {
 		log.Error(err)
 	}
