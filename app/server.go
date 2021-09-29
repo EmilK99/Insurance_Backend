@@ -45,14 +45,11 @@ func (s *server) configureRouter() {
 	//register alerts
 	router.HandleFunc("/api/alerts/register", s.HandleRegisterAlertsEndpoint).Methods("GET")
 
-	//paypal redirect
-	router.HandleFunc("/api/paypal", s.HandleCreatePaypalOrder).Methods("GET")
-
 	//paypal success
 	router.HandleFunc("/api/success", s.HandlerSuccess).Methods("GET")
 
 	//paypal cancel
-	router.HandleFunc("/api/cancel", HandlerCancel).Methods("GET")
+	router.HandleFunc("/api/cancel", s.HandlerCancel).Methods("GET")
 
 	//register webhook endpoint
 	router.HandleFunc("/api/ipn", s.IPNHandler).Methods("POST")
