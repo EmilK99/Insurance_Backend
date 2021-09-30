@@ -143,7 +143,6 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
 		return
 	}
-
 	http.Redirect(w, r, href, 301)
 }
 
@@ -259,13 +258,7 @@ func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 	}
 	token := r.Form.Get("token")
 
-	req, err := s.client.Client.NewRequest(s.ctx, http.MethodPost, "https://api-m.paypal.com/v2/checkout/orders/"+token, nil)
-	if err != nil {
-		log.Error(err)
-	}
-
-	res := paypal.Order{}
-	err = s.client.Client.SendWithAuth(req, &res)
+	res, err := s.client.Client.GetOrder(s.ctx, token)
 	if err != nil {
 		log.Error(err)
 	}
@@ -295,11 +288,11 @@ func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Errorf("Flight info already changed: %v", err)
+		log.Errorf("Flight info already changed: flight date is %v", contract.FlightDate)
 		return
 	}
 
-	req, err = s.client.Client.NewRequest(s.ctx, http.MethodPost, "https://api.sandbox.paypal.com/v2/checkout/orders/"+token+"/capture", nil)
+	req, err := s.client.Client.NewRequest(s.ctx, http.MethodPost, "https://api.sandbox.paypal.com/v2/checkout/orders/"+token+"/capture", nil)
 	if err != nil {
 		log.Error(err)
 	}
@@ -328,13 +321,7 @@ func (s *server) HandlerCancel(w http.ResponseWriter, r *http.Request) {
 	}
 	token := r.Form.Get("token")
 
-	req, err := s.client.Client.NewRequest(s.ctx, http.MethodPost, "https://api-m.paypal.com/v2/checkout/orders/"+token, nil)
-	if err != nil {
-		log.Error(err)
-	}
-
-	res := paypal.Order{}
-	err = s.client.Client.SendWithAuth(req, &res)
+	res, err := s.client.Client.GetOrder(s.ctx, token)
 	if err != nil {
 		log.Error(err)
 	}
