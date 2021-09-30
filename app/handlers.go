@@ -143,7 +143,15 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
 		return
 	}
-	http.Redirect(w, r, href, 301)
+
+	w.WriteHeader(200)
+	err = json.NewEncoder(w).Encode(map[string]string{"url": href})
+	if err != nil {
+		log.Errorf("Failed to encode: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
 }
 
 func (s *server) IPNHandler(w http.ResponseWriter, r *http.Request) {
