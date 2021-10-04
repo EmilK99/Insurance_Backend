@@ -17,6 +17,24 @@ import (
 	"time"
 )
 
+var ContractsMock = []*store.ContractsInfo{
+	{
+		FlightNumber: "AAL123",
+		Status:       "cancelled",
+		Reward:       220,
+	},
+	{
+		FlightNumber: "BAW321",
+		Status:       "cancelled",
+		Reward:       145,
+	},
+	{
+		FlightNumber: "RAC333",
+		Status:       "cancelled",
+		Reward:       299,
+	},
+}
+
 func (s *server) HandleGetContracts(w http.ResponseWriter, r *http.Request) {
 
 	var req store.GetContractsReq
@@ -60,17 +78,25 @@ func (s *server) HandleGetPayouts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contracts, err := s.store.GetPayouts(s.ctx, req.UserID)
+	_, err = s.store.GetPayouts(s.ctx, req.UserID)
 	if err != nil {
 		w.WriteHeader(422)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
 		return
 	}
 	var res response
-	res.Contracts = contracts
+	//res.Contracts = contracts
+	//
+	//for i := range contracts {
+	//	res.TotalPayout += contracts[i].Reward
+	//}
 
-	for i := range contracts {
-		res.TotalPayout += contracts[i].Reward
+	res.Contracts = ContractsMock
+
+	for i := range ContractsMock {
+		if ContractsMock[i].Status == "cancelled" {
+			res.TotalPayout += ContractsMock[i].Reward
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -353,5 +379,45 @@ func (s *server) HandlerCancel(w http.ResponseWriter, r *http.Request) {
 	err = payments.CancelTemplate.Execute(w, nil)
 	if err != nil {
 		log.Error(err)
+	}
+}
+
+func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
+
+	var req struct {
+		UserID string `json:"user_id"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil { // bad request
+		w.WriteHeader(400)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(400), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	_, err = s.store.GetPayouts(s.ctx, req.UserID)
+	if err != nil {
+		w.WriteHeader(422)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	var totalPayout float32
+
+	for i := range ContractsMock {
+		totalPayout += ContractsMock[i].Reward
+		ContractsMock[i].Status = "withdraw"
+	}
+
+	w.WriteHeader(200)
+	err = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(200), "message": "Withdraw requested", "status": "successful"})
+	if err != nil {
+		log.Error(err)
+	}
+}
+
+func HandleRefreshMock(w http.ResponseWriter, r *http.Request) {
+	for i := range ContractsMock {
+		ContractsMock[i].Status = "cancelled"
 	}
 }
