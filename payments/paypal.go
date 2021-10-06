@@ -30,35 +30,34 @@ func (c *Client) Initialize(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) CreatePayout(ctx context.Context, contractID int, userEmail string, ticketprice float32) error {
+func (c *Client) CreatePayout(ctx context.Context, payouts []*store.PayoutsInfo) error {
 
 	// Set payout item with Venmo wallet
 	payout := paypal.Payout{
 		SenderBatchHeader: &paypal.SenderBatchHeader{
-			SenderBatchID: "Payouts_" + fmt.Sprint(contractID),
+			SenderBatchID: "Payouts_Contract",
 			EmailSubject:  "You have a payout!",
 			EmailMessage:  "You have received a payout! Thanks for using our service!",
 		},
-		Items: []paypal.PayoutItem{
-			{
-				RecipientType:   "EMAIL",
-				RecipientWallet: paypal.PaypalRecipientWallet,
-				Receiver:        userEmail,
-				Amount: &paypal.AmountPayout{
-					Value:    fmt.Sprint(ticketprice),
-					Currency: "USD",
-				},
-				Note:         "Thanks for your patronage!",
-				SenderItemID: "201403140001",
+	}
+
+	for i := range payouts {
+		payout.Items = append(payout.Items, paypal.PayoutItem{
+			RecipientType:   "EMAIL",
+			RecipientWallet: paypal.PaypalRecipientWallet,
+			Receiver:        payouts[i].UserEmail,
+			Amount: &paypal.AmountPayout{
+				Value:    fmt.Sprint(payouts[i].TicketPrice),
+				Currency: "USD",
 			},
-		},
+			Note: "Thanks for your patronage!",
+		})
 	}
 
 	_, err := c.Client.CreatePayout(ctx, payout)
 	if err != nil {
 		return err
 	}
-	//fmt.Println(*res)
 	return nil
 }
 

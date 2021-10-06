@@ -395,18 +395,18 @@ func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = s.store.GetPayouts(s.ctx, req.UserID)
+	payouts, err := s.store.GetPayouts(s.ctx, req.UserID)
 	if err != nil {
 		w.WriteHeader(422)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
 		return
 	}
 
-	var totalPayout float32
-
-	for i := range ContractsMock {
-		totalPayout += ContractsMock[i].Reward
-		ContractsMock[i].Status = "withdraw"
+	err = s.client.CreatePayout(s.ctx, payouts)
+	if err != nil {
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
 	}
 
 	w.WriteHeader(200)

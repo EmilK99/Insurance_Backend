@@ -47,3 +47,9 @@ type ContractsInfo struct {
 	Status       string  `json:"status"`
 	Reward       float32 `json:"reward"`
 }
+
+type PayoutsInfo struct {
+	ContractId  int
+	UserEmail   string
+	TicketPrice float32
+}
