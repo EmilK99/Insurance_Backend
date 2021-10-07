@@ -409,6 +409,13 @@ func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = s.store.UpdatePaidPayouts(s.ctx, payouts)
+	if err != nil {
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+
 	w.WriteHeader(200)
 	err = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(200), "message": "Withdraw requested", "status": "successful"})
 	if err != nil {

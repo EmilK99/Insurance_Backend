@@ -49,7 +49,8 @@ type ContractsInfo struct {
 }
 
 type PayoutsInfo struct {
-	ContractId  int
-	UserEmail   string
-	TicketPrice float32
+	ContractId  int     `db:"contract_id"`
+	UserEmail   string  `db:"customer_id"`
+	TicketPrice float32 `db:"amount"`
+	PaySystem   string  `db:"pay_system"`
 }
