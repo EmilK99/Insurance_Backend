@@ -139,7 +139,7 @@ func (s *Store) GetPayouts(ctx context.Context, userID string) ([]*PayoutsInfo, 
 			log.Errorf("Unable to scan: %v\n", err)
 			return nil, err
 		}
-
+		row.PaySystem = "Paypal"
 		payouts = append(payouts, row)
 	}
 
@@ -149,4 +149,21 @@ func (s *Store) GetPayouts(ctx context.Context, userID string) ([]*PayoutsInfo, 
 	}
 
 	return payouts, nil
+}
+
+func (s *Store) UpdatePaidPayouts(ctx context.Context, payouts []*PayoutsInfo) error {
+	for i := range payouts {
+		_, err := s.Conn.Exec(ctx, "UPDATE contracts SET status = 'paid' WHERE id = $1", payouts[i].ContractId)
+		if err != nil {
+			return err
+		}
+
+		_, err = s.Conn.Exec(ctx, "INSERT INTO payouts(contract_id, pay_system, customer_id, amount) VALUES ($1, $2, $3, $4)",
+			payouts[i].ContractId, payouts[i].PaySystem, payouts[i].UserEmail, payouts[i].TicketPrice)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
