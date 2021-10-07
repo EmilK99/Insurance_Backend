@@ -11,10 +11,6 @@ import (
 	"strings"
 )
 
-var eventListeners = event.Listeners{
-	"checkStatus": event.CheckStatus,
-}
-
 func initViper(configPath string) {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))

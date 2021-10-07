@@ -3,16 +3,11 @@ package api
 import (
 	"encoding/json"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"net/http"
 )
 
-func RegisterAlertsEndpoint(host string) error {
-	username := viper.GetString("aeroapi_username")
-	apiKey := viper.GetString("aeroapi_apikey")
-	aeroApiURL := "https://" + username + ":" + apiKey + "@flightxml.flightaware.com/json/FlightXML2/"
-
-	aeroApiURLStr := NewRegisterAlertEndpointURL(aeroApiURL, "https://"+host+"/api/alerts")
+func (a AeroAPI) RegisterAlertsEndpoint(host string) error {
+	aeroApiURLStr := a.NewRegisterAlertEndpointURL("https://" + host + "/api/alerts")
 
 	client := &http.Client{}
 	re, err := http.NewRequest("POST", aeroApiURLStr, nil)
@@ -26,12 +21,8 @@ func RegisterAlertsEndpoint(host string) error {
 	return nil
 }
 
-func SetAlerts(faFlightID string, contractID int) (int, error) {
-	username := viper.GetString("aeroapi_username")
-	apiKey := viper.GetString("aeroapi_apikey")
-	aeroApiURL := "https://" + username + ":" + apiKey + "@flightxml.flightaware.com/json/FlightXML2/"
-
-	aeroApiURLStr := NewSetAlertURL(aeroApiURL, faFlightID, contractID)
+func (a AeroAPI) SetAlerts(faFlightID string, contractID int) (int, error) {
+	aeroApiURLStr := a.NewSetAlertURL(faFlightID, contractID)
 
 	client := &http.Client{}
 	re, err := http.NewRequest("POST", aeroApiURLStr, nil)
@@ -54,12 +45,27 @@ func SetAlerts(faFlightID string, contractID int) (int, error) {
 	return alertId.SetAlertResult, nil
 }
 
-func GetAlerts() error {
-	//TODO: implement alerts getting
+func (a AeroAPI) DeleteAlerts(id int) error {
+	aeroApiURLStr := a.NewDeleteAlertURL(id)
+
+	client := &http.Client{}
+	re, err := http.NewRequest("POST", aeroApiURLStr, nil)
+	if err != nil {
+		return err
+	}
+	_, err = client.Do(re)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func DeleteAlerts() error {
-	//TODO: implement alerts deletting
-	return nil
+//TODO: check cancellation/departure status
+func (a AeroAPI) CheckStatus(flightTd string) {
+	flightInfo, err := a.GetFlightInfoEx(flightTd)
+	if err != nil {
+		log.Error(err)
+	}
+	log.Info(flightInfo.FlightInfoExResult)
 }
