@@ -119,7 +119,7 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	flightInfo, err := api.GetFlightInfoEx(req.FlightNumber)
+	flightInfo, err := s.aeroApi.GetFlightInfoEx(req.FlightNumber)
 	if err != nil {
 		log.Errorf("Unable to get flight info: %v", err)
 		w.WriteHeader(500)
@@ -127,7 +127,7 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	premium, err := api.Calculate(req.FlightNumber, req.TicketPrice)
+	premium, err := s.aeroApi.Calculate(req.FlightNumber, req.TicketPrice)
 	if err != nil {
 		log.Errorf("Unable to calculate fee: %v", err)
 		w.WriteHeader(500)
@@ -146,7 +146,7 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = api.SetAlerts(flightInfo.FlightInfoExResult.Flights[0].FaFlightID, contr.ID)
+	_, err = s.aeroApi.SetAlerts(flightInfo.FlightInfoExResult.Flights[0].FaFlightID, contr.ID)
 	if err != nil {
 		log.Errorf("Unable to set alert: %v", err)
 		w.WriteHeader(500)
@@ -252,7 +252,7 @@ func (s *server) CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	premium, err := api.Calculate(req.FlightNumber, req.TicketPrice)
+	premium, err := s.aeroApi.Calculate(req.FlightNumber, req.TicketPrice)
 	if err != nil {
 		log.Errorf("Unable to calculate fee: %v", err)
 		w.WriteHeader(500)
@@ -273,10 +273,11 @@ func (s *server) CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 func (s *server) HandleAlertWebhook(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 	fmt.Println(r.Body)
+
 }
 
 func (s *server) HandleRegisterAlertsEndpoint(w http.ResponseWriter, r *http.Request) {
-	err := api.RegisterAlertsEndpoint(r.Host)
+	err := s.aeroApi.RegisterAlertsEndpoint(r.Host)
 	if err != nil {
 		log.Errorf("Unable to register endpoint: %v", err)
 		w.WriteHeader(500)

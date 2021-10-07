@@ -17,39 +17,39 @@ func GetSuccessCancelURL(host string, tls bool) (string, string) {
 	return url + "/api/success", url + "/api/cancel"
 }
 
-func NewFlightInfoURL(aeroApiURL, ident string) string {
+func (a AeroAPI) NewFlightInfoURL(ident string) string {
 	data := url.Values{}
 	data.Set("ident", ident)
 	data.Set("howMany", "1")
 
-	u, _ := url.ParseRequestURI(aeroApiURL + FlightInfo)
+	u, _ := url.ParseRequestURI(a.URL + FlightInfo)
 	u.RawQuery = data.Encode()
 
 	return fmt.Sprintf("%v", u)
 }
 
-func NewFlightInfoExURL(aeroApiURL, ident string) string {
+func (a AeroAPI) NewFlightInfoExURL(ident string) string {
 	data := url.Values{}
 	data.Set("ident", ident)
 
-	u, _ := url.ParseRequestURI(aeroApiURL + FlightInfoEx)
+	u, _ := url.ParseRequestURI(a.URL + FlightInfoEx)
 	u.RawQuery = data.Encode()
 
 	return fmt.Sprintf("%v", u)
 }
 
-func NewGetFlightIDURL(aeroApiURL, ident string, departureTime int) string {
+func (a AeroAPI) NewGetFlightIDURL(ident string, departureTime int) string {
 	data := url.Values{}
 	data.Set("ident", ident)
 	data.Set("departureTime", fmt.Sprint(departureTime))
 
-	u, _ := url.ParseRequestURI(aeroApiURL + GetFlightID)
+	u, _ := url.ParseRequestURI(a.URL + GetFlightID)
 	u.RawQuery = data.Encode()
 
 	return fmt.Sprintf("%v", u)
 }
 
-func NewCancellationRateURL(aeroApiURL, ident string) string {
+func (a AeroAPI) NewCancellationRateURL(ident string) string {
 	re := regexp.MustCompile("[A-Z]+")
 
 	data := url.Values{}
@@ -57,44 +57,54 @@ func NewCancellationRateURL(aeroApiURL, ident string) string {
 	data.Set("type_matching", "airline")
 	data.Set("ident_filter", re.FindAllString(ident, -1)[0])
 
-	u, _ := url.ParseRequestURI(aeroApiURL + CancellationStat)
+	u, _ := url.ParseRequestURI(a.URL + CancellationStat)
 	u.RawQuery = data.Encode()
 
 	return fmt.Sprintf("%v", u)
 }
 
-func NewMetarExURL(aeroApiURL, airport string) string {
+func (a AeroAPI) NewMetarExURL(airport string) string {
 	data := url.Values{}
 	data.Set("airport", airport)
 	data.Add("startTime", "0")
 	data.Add("howMany", "1")
 	data.Add("offset", "0")
 
-	u, _ := url.ParseRequestURI(aeroApiURL + MetarEx)
+	u, _ := url.ParseRequestURI(a.URL + MetarEx)
 	u.RawQuery = data.Encode()
 
 	return fmt.Sprintf("%v", u)
 }
 
-func NewRegisterAlertEndpointURL(aeroApiURL, endpoint string) string {
+func (a AeroAPI) NewRegisterAlertEndpointURL(endpoint string) string {
 	data := url.Values{}
 	data.Set("address", endpoint)
 	data.Add("format_type", "json/post")
 
-	u, _ := url.ParseRequestURI(aeroApiURL + RegisterAlertEndpoint)
+	u, _ := url.ParseRequestURI(a.URL + RegisterAlertEndpoint)
 	u.RawQuery = data.Encode()
 
 	return fmt.Sprintf("%v", u)
 }
 
-func NewSetAlertURL(aeroApiURL, faFlightId string, contractID int) string {
+func (a AeroAPI) NewSetAlertURL(faFlightId string, contractID int) string {
 	data := url.Values{}
 	data.Set("alert_id", "0")
 	data.Add("ident", faFlightId)
 	data.Add("channels", "{16 e_departure e_cancelled}")
 	data.Add("max_weekly", "1000")
 
-	u, _ := url.ParseRequestURI(aeroApiURL + SetAlert)
+	u, _ := url.ParseRequestURI(a.URL + SetAlert)
+	u.RawQuery = data.Encode()
+
+	return fmt.Sprintf("%v", u)
+}
+
+func (a AeroAPI) NewDeleteAlertURL(id int) string {
+	data := url.Values{}
+	data.Set("alert_id", fmt.Sprint(id))
+
+	u, _ := url.ParseRequestURI(a.URL + DeleteAlert)
 	u.RawQuery = data.Encode()
 
 	return fmt.Sprintf("%v", u)

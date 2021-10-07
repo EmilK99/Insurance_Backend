@@ -5,17 +5,18 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"net/http"
 	"strings"
 )
 
-func GetFlightInfoEx(flightNumber string) (*FlightInfoExResponse, error) {
-	username := viper.GetString("aeroapi_username")
-	apiKey := viper.GetString("aeroapi_apikey")
-	aeroApiURL := "https://" + username + ":" + apiKey + "@flightxml.flightaware.com/json/FlightXML2/"
+type AeroAPI struct {
+	Username string
+	APIKey   string
+	URL      string
+}
 
-	aeroApiURLStr := NewFlightInfoExURL(aeroApiURL, flightNumber)
+func (a AeroAPI) GetFlightInfoEx(flightNumber string) (*FlightInfoExResponse, error) {
+	aeroApiURLStr := a.NewFlightInfoExURL(flightNumber)
 
 	client := &http.Client{}
 	re, _ := http.NewRequest("POST", aeroApiURLStr, nil)
@@ -42,12 +43,8 @@ func GetFlightInfoEx(flightNumber string) (*FlightInfoExResponse, error) {
 	return flightInfoEx, nil
 }
 
-func (f *FlightInfoExResponse) GetCancellationRate() (float32, error) {
-	username := viper.GetString("aeroapi_username")
-	apiKey := viper.GetString("aeroapi_apikey")
-	aeroApiURL := "https://" + username + ":" + apiKey + "@flightxml.flightaware.com/json/FlightXML2c/"
-
-	aeroApiURLStr := NewCancellationRateURL(aeroApiURL, f.FlightInfoExResult.Flights[0].Ident)
+func (a AeroAPI) GetCancellationRate(f *FlightInfoExResponse) (float32, error) {
+	aeroApiURLStr := a.NewCancellationRateURL(f.FlightInfoExResult.Flights[0].Ident)
 
 	client := &http.Client{}
 	re, _ := http.NewRequest("POST", aeroApiURLStr, nil)
@@ -73,12 +70,8 @@ func (f *FlightInfoExResponse) GetCancellationRate() (float32, error) {
 	return 100 * float32(cancelations) / float32(total), nil
 }
 
-func (f *FlightInfoExResponse) GetMetarExInfo() (*MetarExResponse, error) {
-	username := viper.GetString("aeroapi_username")
-	apiKey := viper.GetString("aeroapi_apikey")
-	aeroApiURL := "https://" + username + ":" + apiKey + "@flightxml.flightaware.com/json/FlightXML2/"
-
-	aeroApiURLStr := NewMetarExURL(aeroApiURL, f.FlightInfoExResult.Flights[0].Origin)
+func (a AeroAPI) GetMetarExInfo(f *FlightInfoExResponse) (*MetarExResponse, error) {
+	aeroApiURLStr := a.NewMetarExURL(f.FlightInfoExResult.Flights[0].Origin)
 
 	re, _ := http.NewRequest("POST", aeroApiURLStr, nil)
 
@@ -96,7 +89,7 @@ func (f *FlightInfoExResponse) GetMetarExInfo() (*MetarExResponse, error) {
 	return metarEx, nil
 }
 
-func (f *FlightInfoExResponse) CalculateFee(ticketPrice, cancelRate float32) (float32, error) {
+func (a AeroAPI) CalculateFee(f *FlightInfoExResponse, ticketPrice, cancelRate float32) (float32, error) {
 	var fee float32
 	//cancel rate addition
 	fee += cancelRate * cancelRate / 2
@@ -107,7 +100,7 @@ func (f *FlightInfoExResponse) CalculateFee(ticketPrice, cancelRate float32) (fl
 	}
 
 	//wind and snow premium addition
-	metarEx, err := f.GetMetarExInfo()
+	metarEx, err := a.GetMetarExInfo(f)
 	if err != nil {
 		return 0, err
 	}
@@ -125,8 +118,8 @@ func (f *FlightInfoExResponse) CalculateFee(ticketPrice, cancelRate float32) (fl
 	return fee, nil
 }
 
-func Calculate(flightNumber string, ticketPrice float32) (float32, error) {
-	flightInfo, err := GetFlightInfoEx(flightNumber)
+func (a AeroAPI) Calculate(flightNumber string, ticketPrice float32) (float32, error) {
+	flightInfo, err := a.GetFlightInfoEx(flightNumber)
 	if err != nil {
 		log.Errorf("Unable to get flight info: %v", err)
 		return 0, err
@@ -134,11 +127,11 @@ func Calculate(flightNumber string, ticketPrice float32) (float32, error) {
 
 	//fmt.Println(flightInfo.FlightInfoExResult.Flights[0].FaFlightID)
 
-	cancelRate, err := flightInfo.GetCancellationRate()
+	cancelRate, err := a.GetCancellationRate(flightInfo)
 	if err != nil {
 		log.Errorf("Unable to get cancellation rate: %v", err)
 		return 0, err
 	}
 
-	return flightInfo.CalculateFee(ticketPrice, cancelRate)
+	return a.CalculateFee(flightInfo, ticketPrice, cancelRate)
 }
