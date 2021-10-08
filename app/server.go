@@ -48,7 +48,7 @@ func (s *server) configureRouter() {
 	router.HandleFunc("/api/payouts", s.HandleGetPayouts).Methods("POST")
 
 	//alerts webhook
-	router.HandleFunc("/api/alerts", s.HandleAlertWebhook).Methods("POST")
+	router.HandleFunc("/api/alerts", s.HandleAlertWebhook).Methods("GET", "POST")
 
 	//register alerts
 	router.HandleFunc("/api/alerts/register", s.HandleRegisterAlertsEndpoint).Methods("GET")
