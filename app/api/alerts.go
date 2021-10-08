@@ -14,10 +14,13 @@ func (a AeroAPI) RegisterAlertsEndpoint(host string) error {
 	if err != nil {
 		return err
 	}
-	_, err = client.Do(re)
+
+	res, err := client.Do(re)
 	if err != nil {
 		return err
 	}
+
+	log.Println(res)
 	return nil
 }
 
