@@ -272,7 +272,7 @@ func (s *server) CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) HandleAlertWebhook(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
-	fmt.Println(r.Body)
+	log.Println(r)
 
 }
 
