@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/plutov/paypal/v4"
 	log "github.com/sirupsen/logrus"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -272,8 +273,12 @@ func (s *server) CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) HandleAlertWebhook(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
-	log.Println(r)
+	req, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Error(err)
+	}
 
+	fmt.Println(string(req))
 }
 
 func (s *server) HandleRegisterAlertsEndpoint(w http.ResponseWriter, r *http.Request) {
