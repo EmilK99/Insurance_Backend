@@ -90,7 +90,7 @@ func (s *Store) GetContractsByUser(ctx context.Context, userID string) ([]*Contr
 
 	var contracts []*ContractsInfo
 
-	rows, err := s.Conn.Query(ctx, "SELECT flight_number, status, ticket_price FROM contracts WHERE user_id = $1", userID)
+	rows, err := s.Conn.Query(ctx, "SELECT id, flight_number, status, ticket_price FROM contracts WHERE user_id = $1", userID)
 	if err != nil {
 		log.Errorf("Unable to SELECT: %v\n", err)
 		return nil, err
@@ -100,7 +100,7 @@ func (s *Store) GetContractsByUser(ctx context.Context, userID string) ([]*Contr
 
 	for rows.Next() {
 		row := new(ContractsInfo)
-		err := rows.Scan(&row.FlightNumber, &row.Status, &row.Reward)
+		err := rows.Scan(&row.ContractID, &row.FlightNumber, &row.Status, &row.Reward)
 		if err != nil {
 			log.Errorf("Unable to scan: %v\n", err)
 			return nil, err
@@ -124,7 +124,7 @@ func (s *Store) GetContractsByUser(ctx context.Context, userID string) ([]*Contr
 func (s *Store) GetPayouts(ctx context.Context, userID string) ([]*PayoutsInfo, error) {
 
 	var payouts []*PayoutsInfo
-	rows, err := s.Conn.Query(ctx, "SELECT c.id, pa.customer_id, c.ticket_price FROM contracts c left join payments pa on c.id = pa.contract_id WHERE c.user_id = $1 AND status = $2", userID, "cancelled")
+	rows, err := s.Conn.Query(ctx, "SELECT c.id, pa.customer_id, c.ticket_price, c.flight_number FROM contracts c left join payments pa on c.id = pa.contract_id WHERE c.user_id = $1 AND status = $2", userID, "cancelled")
 	if err != nil {
 		log.Errorf("Unable to SELECT: %v\n", err)
 		return nil, err
@@ -134,7 +134,7 @@ func (s *Store) GetPayouts(ctx context.Context, userID string) ([]*PayoutsInfo, 
 
 	for rows.Next() {
 		row := new(PayoutsInfo)
-		err := rows.Scan(&row.ContractId, &row.UserEmail, &row.TicketPrice)
+		err := rows.Scan(&row.ContractId, &row.UserEmail, &row.TicketPrice, &row.FlightNumber)
 		if err != nil {
 			log.Errorf("Unable to scan: %v\n", err)
 			return nil, err
