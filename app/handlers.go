@@ -389,7 +389,8 @@ func (s *server) HandlerCancel(w http.ResponseWriter, r *http.Request) {
 func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
-		UserID string `json:"user_id"`
+		UserID    string `json:"user_id"`
+		Contracts []int  `json:"contracts"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -406,14 +407,24 @@ func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.client.CreatePayout(s.ctx, payouts)
+	var newPayouts []*store.PayoutsInfo
+
+	for _, v := range req.Contracts {
+		for j := range payouts {
+			if payouts[j].ContractId == v {
+				newPayouts = append(newPayouts, payouts[j])
+			}
+		}
+	}
+
+	err = s.client.CreatePayout(s.ctx, newPayouts)
 	if err != nil {
 		w.WriteHeader(500)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
 		return
 	}
 
-	err = s.store.UpdatePaidPayouts(s.ctx, payouts)
+	err = s.store.UpdatePaidPayouts(s.ctx, newPayouts)
 	if err != nil {
 		w.WriteHeader(500)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
