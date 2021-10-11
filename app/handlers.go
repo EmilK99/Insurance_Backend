@@ -79,25 +79,22 @@ func (s *server) HandleGetPayouts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = s.store.GetPayouts(s.ctx, req.UserID)
+	payouts, err := s.store.GetPayouts(s.ctx, req.UserID)
 	if err != nil {
 		w.WriteHeader(422)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
 		return
 	}
-	var res response
-	//res.Contracts = contracts
-	//
-	//for i := range contracts {
-	//	res.TotalPayout += contracts[i].Reward
-	//}
+	var res store.GetPayoutsResponse
 
-	res.Contracts = ContractsMock
-
-	for i := range ContractsMock {
-		if ContractsMock[i].Status == "cancelled" {
-			res.TotalPayout += ContractsMock[i].Reward
+	for i := range payouts {
+		ctr := store.ContractsInfo{ContractID: payouts[i].ContractId,
+			FlightNumber: payouts[i].FlightNumber,
+			Status:       "cancelled",
+			Reward:       payouts[i].TicketPrice,
 		}
+		res.Contracts = append(res.Contracts, &ctr)
+		res.TotalPayout += payouts[i].TicketPrice
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

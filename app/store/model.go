@@ -43,14 +43,21 @@ type CreateContractResponse struct {
 }
 
 type ContractsInfo struct {
+	ContractID   int     `json:"contract_id"`
 	FlightNumber string  `json:"flight_number"`
 	Status       string  `json:"status"`
 	Reward       float32 `json:"reward"`
 }
 
 type PayoutsInfo struct {
-	ContractId  int     `db:"contract_id"`
-	UserEmail   string  `db:"customer_id"`
-	TicketPrice float32 `db:"amount"`
-	PaySystem   string  `db:"pay_system"`
+	ContractId   int     `db:"contract_id"`
+	UserEmail    string  `db:"customer_id"`
+	FlightNumber string  `json:"flight_number"`
+	TicketPrice  float32 `db:"amount"`
+	PaySystem    string  `db:"pay_system"`
+}
+
+type GetPayoutsResponse struct {
+	Contracts   []*ContractsInfo `json:"contracts"`
+	TotalPayout float32          `json:"total_payout"`
 }
