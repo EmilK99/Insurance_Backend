@@ -20,16 +20,19 @@ import (
 
 var ContractsMock = []*store.ContractsInfo{
 	{
+		ContractID:   12333,
 		FlightNumber: "AAL123",
 		Status:       "cancelled",
 		Reward:       220,
 	},
 	{
+		ContractID:   12311,
 		FlightNumber: "BAW321",
 		Status:       "cancelled",
 		Reward:       145,
 	},
 	{
+		ContractID:   12312,
 		FlightNumber: "RAC333",
 		Status:       "cancelled",
 		Reward:       299,
