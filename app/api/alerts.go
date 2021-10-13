@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -9,6 +10,7 @@ import (
 func (a AeroAPI) RegisterAlertsEndpoint(host string) error {
 	aeroApiURLStr := a.NewRegisterAlertEndpointURL("https://" + host + "/api/alerts")
 
+	fmt.Println(aeroApiURLStr)
 	client := &http.Client{}
 	re, err := http.NewRequest("POST", aeroApiURLStr, nil)
 	if err != nil {
