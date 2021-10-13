@@ -1,7 +1,7 @@
 package api
 
 const (
-	FlightInfo            = "FlightInfo"
+	FlightInformation     = "FlightInfo"
 	GetFlightID           = "GetFlightID"
 	FlightInfoEx          = "FlightInfoEx"
 	MetarEx               = "MetarEx"
@@ -82,29 +82,8 @@ type FlightInfoResponse struct {
 
 type FlightInfoExResponse struct {
 	FlightInfoExResult struct {
-		NextOffset int `json:"next_offset"`
-		Flights    []struct {
-			FaFlightID           string `json:"faFlightID"`
-			Ident                string `json:"ident"`
-			Aircrafttype         string `json:"aircrafttype"`
-			FiledEte             string `json:"filed_ete"`
-			FiledTime            int    `json:"filed_time"`
-			FiledDeparturetime   int    `json:"filed_departuretime"`
-			FiledAirspeedKts     int    `json:"filed_airspeed_kts"`
-			FiledAirspeedMach    string `json:"filed_airspeed_mach"`
-			FiledAltitude        int    `json:"filed_altitude"`
-			Route                string `json:"route"`
-			Actualdeparturetime  int    `json:"actualdeparturetime"`
-			Estimatedarrivaltime int    `json:"estimatedarrivaltime"`
-			Actualarrivaltime    int    `json:"actualarrivaltime"`
-			Diverted             string `json:"diverted"`
-			Origin               string `json:"origin"`
-			Destination          string `json:"destination"`
-			OriginName           string `json:"originName"`
-			OriginCity           string `json:"originCity"`
-			DestinationName      string `json:"destinationName"`
-			DestinationCity      string `json:"destinationCity"`
-		} `json:"flights"`
+		NextOffset int          `json:"next_offset"`
+		Flights    []FlightInfo `json:"flights"`
 	} `json:"FlightInfoExResult"`
 }
 
@@ -151,4 +130,27 @@ type MetarExResponse struct {
 
 type SetAlertResponse struct {
 	SetAlertResult int `json:"SetAlertResult"`
+}
+
+type FlightInfo struct {
+	FaFlightID           string `json:"faFlightID"`
+	Ident                string `json:"ident"`
+	Aircrafttype         string `json:"aircrafttype"`
+	FiledEte             string `json:"filed_ete"`
+	FiledTime            int64  `json:"filed_time"`
+	FiledDeparturetime   int64  `json:"filed_departuretime"`
+	FiledAirspeedKts     int    `json:"filed_airspeed_kts"`
+	FiledAirspeedMach    string `json:"filed_airspeed_mach"`
+	FiledAltitude        int    `json:"filed_altitude"`
+	Route                string `json:"route"`
+	Actualdeparturetime  int64  `json:"actualdeparturetime"`
+	Estimatedarrivaltime int64  `json:"estimatedarrivaltime"`
+	Actualarrivaltime    int64  `json:"actualarrivaltime"`
+	Diverted             string `json:"diverted"`
+	Origin               string `json:"origin"`
+	Destination          string `json:"destination"`
+	OriginName           string `json:"originName"`
+	OriginCity           string `json:"originCity"`
+	DestinationName      string `json:"destinationName"`
+	DestinationCity      string `json:"destinationCity"`
 }

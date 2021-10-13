@@ -20,9 +20,9 @@ func GetSuccessCancelURL(host string, tls bool) (string, string) {
 func (a AeroAPI) NewFlightInfoURL(ident string) string {
 	data := url.Values{}
 	data.Set("ident", ident)
-	data.Set("howMany", "1")
+	data.Set("howMany", "10")
 
-	u, _ := url.ParseRequestURI(a.URL + FlightInfo)
+	u, _ := url.ParseRequestURI(a.URL + FlightInformation)
 	u.RawQuery = data.Encode()
 
 	return fmt.Sprintf("%v", u)

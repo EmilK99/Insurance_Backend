@@ -66,10 +66,10 @@ func (a AeroAPI) DeleteAlerts(id int) error {
 }
 
 //TODO: check cancellation/departure status
-func (a AeroAPI) CheckStatus(flightTd string) {
-	flightInfo, err := a.GetFlightInfoEx(flightTd)
+func (a AeroAPI) CheckStatus(flightId string) {
+	flightInfo, err := a.GetFlightInfoEx(flightId)
 	if err != nil {
 		log.Error(err)
 	}
-	log.Info(flightInfo.FlightInfoExResult)
+	log.Info(flightInfo)
 }

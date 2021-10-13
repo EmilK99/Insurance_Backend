@@ -138,7 +138,7 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contr := store.NewContract(req.UserID, req.FlightNumber, int64(flightInfo.FlightInfoExResult.Flights[0].FiledDeparturetime),
+	contr := store.NewContract(req.UserID, req.FlightNumber, int64(flightInfo.FiledDeparturetime),
 		req.TicketPrice, premium)
 
 	if time.Unix(contr.FlightDate, 0).Before(time.Now()) {
@@ -156,7 +156,7 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = s.aeroApi.SetAlerts(flightInfo.FlightInfoExResult.Flights[0].FaFlightID, contr.ID)
+	_, err = s.aeroApi.SetAlerts(flightInfo.FaFlightID, contr.ID)
 	if err != nil {
 		log.Errorf("Unable to set alert: %v", err)
 		w.WriteHeader(500)
