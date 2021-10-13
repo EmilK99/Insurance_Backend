@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type AeroAPI struct {
@@ -15,7 +16,7 @@ type AeroAPI struct {
 	URL      string
 }
 
-func (a AeroAPI) GetFlightInfoEx(flightNumber string) (*FlightInfoExResponse, error) {
+func (a AeroAPI) GetFlightInfoEx(flightNumber string) (*FlightInfo, error) {
 	aeroApiURLStr := a.NewFlightInfoExURL(flightNumber)
 
 	client := &http.Client{}
@@ -32,19 +33,31 @@ func (a AeroAPI) GetFlightInfoEx(flightNumber string) (*FlightInfoExResponse, er
 		return nil, err
 	}
 
-	if len(flightInfoEx.FlightInfoExResult.Flights) == 0 {
+	flights := flightInfoEx.FlightInfoExResult.Flights
+
+	if len(flights) == 0 {
 		return nil, errors.New(fmt.Sprintf("Info about this flight doesn't exist: %s", flightNumber))
 	}
 
-	if flightInfoEx.FlightInfoExResult.Flights[0].Actualarrivaltime != 0 {
-		return nil, errors.New(fmt.Sprintf("Flight already arrived: %s", flightNumber))
+	if flights[0].Actualdeparturetime != 0 || time.Now().After(time.Unix(flights[0].FiledDeparturetime, 0)) {
+		return nil, errors.New(fmt.Sprintf("Flight already departured: %s", flightNumber))
 	}
 
-	return flightInfoEx, nil
+	aim := 0
+	if len(flights) > 1 {
+		for i := 1; i < len(flights); i++ {
+			if time.Now().After(time.Unix(flights[i].FiledDeparturetime, 0)) {
+				aim = i - 1
+				break
+			}
+		}
+	}
+
+	return &flights[aim], nil
 }
 
-func (a AeroAPI) GetCancellationRate(f *FlightInfoExResponse) (float32, error) {
-	aeroApiURLStr := a.NewCancellationRateURL(f.FlightInfoExResult.Flights[0].Ident)
+func (a AeroAPI) GetCancellationRate(f *FlightInfo) (float32, error) {
+	aeroApiURLStr := a.NewCancellationRateURL(f.Ident)
 
 	client := &http.Client{}
 	re, _ := http.NewRequest("POST", aeroApiURLStr, nil)
@@ -70,8 +83,8 @@ func (a AeroAPI) GetCancellationRate(f *FlightInfoExResponse) (float32, error) {
 	return 100 * float32(cancelations) / float32(total), nil
 }
 
-func (a AeroAPI) GetMetarExInfo(f *FlightInfoExResponse) (*MetarExResponse, error) {
-	aeroApiURLStr := a.NewMetarExURL(f.FlightInfoExResult.Flights[0].Origin)
+func (a AeroAPI) GetMetarExInfo(f *FlightInfo) (*MetarExResponse, error) {
+	aeroApiURLStr := a.NewMetarExURL(f.Origin)
 
 	re, _ := http.NewRequest("POST", aeroApiURLStr, nil)
 
@@ -89,7 +102,7 @@ func (a AeroAPI) GetMetarExInfo(f *FlightInfoExResponse) (*MetarExResponse, erro
 	return metarEx, nil
 }
 
-func (a AeroAPI) CalculateFee(f *FlightInfoExResponse, ticketPrice, cancelRate float32) (float32, error) {
+func (a AeroAPI) CalculateFee(f *FlightInfo, ticketPrice, cancelRate float32) (float32, error) {
 	var fee float32
 	//cancel rate addition
 	fee += cancelRate * cancelRate / 2
@@ -105,7 +118,7 @@ func (a AeroAPI) CalculateFee(f *FlightInfoExResponse, ticketPrice, cancelRate f
 		return 0, err
 	}
 	if len(metarEx.MetarExResult.Metar) == 0 {
-		return 0, errors.New(fmt.Sprintf("Unable to get weather conditions in: %s", f.FlightInfoExResult.Flights[0].Origin))
+		return 0, errors.New(fmt.Sprintf("Unable to get weather conditions in: %s", f.Origin))
 	}
 
 	windSpeed := metarEx.MetarExResult.Metar[0].WindSpeed

@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"github.com/plutov/paypal/v4"
 	log "github.com/sirupsen/logrus"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -20,16 +19,19 @@ import (
 
 var ContractsMock = []*store.ContractsInfo{
 	{
+		ContractID:   12333,
 		FlightNumber: "AAL123",
 		Status:       "cancelled",
 		Reward:       220,
 	},
 	{
+		ContractID:   12311,
 		FlightNumber: "BAW321",
 		Status:       "cancelled",
 		Reward:       145,
 	},
 	{
+		ContractID:   12312,
 		FlightNumber: "RAC333",
 		Status:       "cancelled",
 		Reward:       299,
@@ -67,11 +69,6 @@ func (s *server) HandleGetPayouts(w http.ResponseWriter, r *http.Request) {
 
 	var req store.GetContractsReq
 
-	type response struct {
-		Contracts   []*store.ContractsInfo `json:"contracts"`
-		TotalPayout float32                `json:"total_payout"`
-	}
-
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil { // bad request
 		w.WriteHeader(400)
@@ -79,22 +76,30 @@ func (s *server) HandleGetPayouts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payouts, err := s.store.GetPayouts(s.ctx, req.UserID)
-	if err != nil {
-		w.WriteHeader(422)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
-		return
-	}
+	//payouts, err := s.store.GetPayouts(s.ctx, req.UserID)
+	//if err != nil {
+	//	w.WriteHeader(422)
+	//	_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
+	//	return
+	//}
 	var res store.GetPayoutsResponse
+	//
+	//for i := range payouts {
+	//	ctr := store.ContractsInfo{ContractID: payouts[i].ContractId,
+	//		FlightNumber: payouts[i].FlightNumber,
+	//		Status:       "cancelled",
+	//		Reward:       payouts[i].TicketPrice,
+	//	}
+	//	res.Contracts = append(res.Contracts, &ctr)
+	//	res.TotalPayout += payouts[i].TicketPrice
+	//}
 
-	for i := range payouts {
-		ctr := store.ContractsInfo{ContractID: payouts[i].ContractId,
-			FlightNumber: payouts[i].FlightNumber,
-			Status:       "cancelled",
-			Reward:       payouts[i].TicketPrice,
+	res.Contracts = ContractsMock
+
+	for i := range ContractsMock {
+		if ContractsMock[i].Status == "cancelled" {
+			res.TotalPayout += ContractsMock[i].Reward
 		}
-		res.Contracts = append(res.Contracts, &ctr)
-		res.TotalPayout += payouts[i].TicketPrice
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -133,8 +138,15 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contr := store.NewContract(req.UserID, req.FlightNumber, int64(flightInfo.FlightInfoExResult.Flights[0].FiledDeparturetime),
+	contr := store.NewContract(req.UserID, req.FlightNumber, int64(flightInfo.FiledDeparturetime),
 		req.TicketPrice, premium)
+
+	if time.Unix(contr.FlightDate, 0).Before(time.Now()) {
+		log.Error("Operation can't be done", errors.New("123"))
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": errors.New("Flight already departured or cancelled").Error(), "status": "Error"})
+		return
+	}
 
 	err = s.store.CreateContract(s.ctx, &contr)
 	if err != nil {
@@ -144,7 +156,7 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = s.aeroApi.SetAlerts(flightInfo.FlightInfoExResult.Flights[0].FaFlightID, contr.ID)
+	_, err = s.aeroApi.SetAlerts(flightInfo.FaFlightID, contr.ID)
 	if err != nil {
 		log.Errorf("Unable to set alert: %v", err)
 		w.WriteHeader(500)
@@ -152,12 +164,6 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if time.Unix(contr.FlightDate, 0).Before(time.Now()) {
-		log.Error("Operation can't be done", errors.New("123"))
-		w.WriteHeader(500)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": errors.New("Flight already departured or cancelled").Error(), "status": "Error"})
-		return
-	}
 	returnUrl, cancelURL := api.GetSuccessCancelURL(r.Host, false)
 
 	href, err := s.client.CreateOrder(s.ctx, contr, returnUrl, cancelURL)
@@ -269,17 +275,23 @@ func (s *server) CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) HandleAlertWebhook(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(200)
-	req, err := io.ReadAll(r.Body)
-	if err != nil {
-		log.Error(err)
+
+	var alert store.Alert
+
+	err := json.NewDecoder(r.Body).Decode(&alert)
+	if err != nil { // bad request
+		w.WriteHeader(400)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(400), "message": err.Error(), "status": "Error"})
+		return
 	}
 
-	fmt.Println(string(req))
+	log.Println(alert.Flight.Ident, alert.Flight.FiledDeparturetime, alert.Eventcode)
+	w.WriteHeader(200)
 }
 
 func (s *server) HandleRegisterAlertsEndpoint(w http.ResponseWriter, r *http.Request) {
-	err := s.aeroApi.RegisterAlertsEndpoint(r.Host)
+	host, _ := url.QueryUnescape(r.Host)
+	err := s.aeroApi.RegisterAlertsEndpoint(host)
 	if err != nil {
 		log.Errorf("Unable to register endpoint: %v", err)
 		w.WriteHeader(500)

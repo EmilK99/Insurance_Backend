@@ -2,12 +2,13 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
 func (a AeroAPI) RegisterAlertsEndpoint(host string) error {
-	aeroApiURLStr := a.NewRegisterAlertEndpointURL("https://" + host + "/api/alerts")
+	aeroApiURLStr := a.NewRegisterAlertEndpointURL(fmt.Sprintf("https://%s/api/alerts", host))
 
 	client := &http.Client{}
 	re, err := http.NewRequest("POST", aeroApiURLStr, nil)
@@ -65,10 +66,10 @@ func (a AeroAPI) DeleteAlerts(id int) error {
 }
 
 //TODO: check cancellation/departure status
-func (a AeroAPI) CheckStatus(flightTd string) {
-	flightInfo, err := a.GetFlightInfoEx(flightTd)
+func (a AeroAPI) CheckStatus(flightId string) {
+	flightInfo, err := a.GetFlightInfoEx(flightId)
 	if err != nil {
 		log.Error(err)
 	}
-	log.Info(flightInfo.FlightInfoExResult)
+	log.Info(flightInfo)
 }
