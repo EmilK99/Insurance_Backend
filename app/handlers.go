@@ -285,7 +285,9 @@ func (s *server) HandleAlertWebhook(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) HandleRegisterAlertsEndpoint(w http.ResponseWriter, r *http.Request) {
-	err := s.aeroApi.RegisterAlertsEndpoint(r.Host)
+	host, _ := url.QueryUnescape(r.Host)
+
+	err := s.aeroApi.RegisterAlertsEndpoint(host)
 	if err != nil {
 		log.Errorf("Unable to register endpoint: %v", err)
 		w.WriteHeader(500)
