@@ -39,7 +39,7 @@ func (a AeroAPI) GetFlightInfoEx(flightNumber string) (*FlightInfo, error) {
 		return nil, errors.New(fmt.Sprintf("Info about this flight doesn't exist: %s", flightNumber))
 	}
 
-	if time.Now().After(time.Unix(flights[0].FiledDeparturetime, 0)) {
+	if flights[0].Actualdeparturetime != 0 || time.Now().After(time.Unix(flights[0].FiledDeparturetime, 0)) {
 		return nil, errors.New(fmt.Sprintf("Flight already departured: %s", flightNumber))
 	}
 
