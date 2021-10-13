@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"github.com/plutov/paypal/v4"
 	log "github.com/sirupsen/logrus"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -142,6 +141,13 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 	contr := store.NewContract(req.UserID, req.FlightNumber, int64(flightInfo.FlightInfoExResult.Flights[0].FiledDeparturetime),
 		req.TicketPrice, premium)
 
+	if time.Unix(contr.FlightDate, 0).Before(time.Now()) {
+		log.Error("Operation can't be done", errors.New("123"))
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": errors.New("Flight already departured or cancelled").Error(), "status": "Error"})
+		return
+	}
+
 	err = s.store.CreateContract(s.ctx, &contr)
 	if err != nil {
 		log.Errorf("Unable to create contract: %v", err)
@@ -158,12 +164,6 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if time.Unix(contr.FlightDate, 0).Before(time.Now()) {
-		log.Error("Operation can't be done", errors.New("123"))
-		w.WriteHeader(500)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": errors.New("Flight already departured or cancelled").Error(), "status": "Error"})
-		return
-	}
 	returnUrl, cancelURL := api.GetSuccessCancelURL(r.Host, false)
 
 	href, err := s.client.CreateOrder(s.ctx, contr, returnUrl, cancelURL)
@@ -275,18 +275,22 @@ func (s *server) CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) HandleAlertWebhook(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(200)
-	req, err := io.ReadAll(r.Body)
-	if err != nil {
-		log.Error(err)
+
+	var alert store.Alert
+
+	err := json.NewDecoder(r.Body).Decode(&alert)
+	if err != nil { // bad request
+		w.WriteHeader(400)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(400), "message": err.Error(), "status": "Error"})
+		return
 	}
 
-	fmt.Println(string(req))
+	log.Println(alert.Flight.Ident, alert.Flight.FiledDeparturetime, alert.Eventcode)
+	w.WriteHeader(200)
 }
 
 func (s *server) HandleRegisterAlertsEndpoint(w http.ResponseWriter, r *http.Request) {
 	host, _ := url.QueryUnescape(r.Host)
-	fmt.Println(host)
 	err := s.aeroApi.RegisterAlertsEndpoint(host)
 	if err != nil {
 		log.Errorf("Unable to register endpoint: %v", err)
