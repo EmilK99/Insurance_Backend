@@ -8,7 +8,7 @@ import (
 )
 
 func (a AeroAPI) RegisterAlertsEndpoint(host string) error {
-	aeroApiURLStr := a.NewRegisterAlertEndpointURL("https://" + host + "/api/alerts")
+	aeroApiURLStr := a.NewRegisterAlertEndpointURL(fmt.Sprintf("https://%s/api/alerts", host))
 
 	fmt.Println(aeroApiURLStr)
 	client := &http.Client{}
