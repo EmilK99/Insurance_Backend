@@ -95,6 +95,7 @@ func (a AeroAPI) NewSetAlertURL(faFlightId string, contractID int) string {
 	data.Add("max_weekly", "1000")
 
 	u, _ := url.ParseRequestURI(a.URL + SetAlert)
+	fmt.Println(u)
 	u.RawQuery = data.Encode()
 
 	return fmt.Sprintf("%v", u)
