@@ -138,7 +138,7 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contr := store.NewContract(req.UserID, req.FlightNumber, int64(flightInfo.FiledDeparturetime),
+	contr := store.NewContract(req.UserID, req.FlightNumber, flightInfo.FiledDeparturetime,
 		req.TicketPrice, premium)
 
 	if time.Unix(contr.FlightDate, 0).Before(time.Now()) {

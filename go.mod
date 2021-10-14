@@ -10,6 +10,7 @@ require (
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/plutov/paypal v2.0.5+incompatible // indirect
 	github.com/plutov/paypal/v4 v4.4.0
+	github.com/portto/solana-go-sdk v1.8.1 // indirect
 	github.com/rs/cors v1.8.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
