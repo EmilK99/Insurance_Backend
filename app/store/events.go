@@ -17,17 +17,17 @@ type Alert struct {
 		FiledEte              string `json:"filed_ete"`
 		FiledAltitude         int    `json:"filed_altitude"`
 		FiledAirspeedKts      int    `json:"filed_airspeed_kts"`
-		FiledTime             int    `json:"filed_time"`
-		FiledBlockoutTime     int    `json:"filed_blockout_time"`
-		EstimatedBlockoutTime int    `json:"estimated_blockout_time"`
-		ActualBlockoutTime    int    `json:"actual_blockout_time"`
-		FiledDeparturetime    int    `json:"filed_departuretime"`
-		Actualdeparturetime   int    `json:"actualdeparturetime"`
-		FiledArrivaltime      int    `json:"filed_arrivaltime"`
-		Estimatedarrivaltime  int    `json:"estimatedarrivaltime"`
-		Actualarrivaltime     int    `json:"actualarrivaltime"`
-		FiledBlockinTime      int    `json:"filed_blockin_time"`
-		EstimatedBlockinTime  int    `json:"estimated_blockin_time"`
-		ActualBlockinTime     int    `json:"actual_blockin_time"`
+		FiledTime             int64  `json:"filed_time"`
+		FiledBlockoutTime     int64  `json:"filed_blockout_time"`
+		EstimatedBlockoutTime int64  `json:"estimated_blockout_time"`
+		ActualBlockoutTime    int64  `json:"actual_blockout_time"`
+		FiledDeparturetime    int64  `json:"filed_departuretime"`
+		Actualdeparturetime   int64  `json:"actualdeparturetime"`
+		FiledArrivaltime      int64  `json:"filed_arrivaltime"`
+		Estimatedarrivaltime  int64  `json:"estimatedarrivaltime"`
+		Actualarrivaltime     int64  `json:"actualarrivaltime"`
+		FiledBlockinTime      int64  `json:"filed_blockin_time"`
+		EstimatedBlockinTime  int64  `json:"estimated_blockin_time"`
+		ActualBlockinTime     int64  `json:"actual_blockin_time"`
 	} `json:"flight"`
 }
