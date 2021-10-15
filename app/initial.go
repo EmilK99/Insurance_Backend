@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"flight_app/app/sc"
 	event "flight_app/app/store"
 	"github.com/jackc/pgx/v4"
 	log "github.com/sirupsen/logrus"
@@ -84,9 +83,9 @@ func Run(configPath string, skipMigration bool) {
 	listenAddr := viper.GetString("listen") + ":" + port
 	log.Infof("Starting HTTP server at %s...", listenAddr)
 
-	solAccount, _ := sc.NewClient()
-
-	solAccount.CreateSmartContract(ctx, 0)
+	//solAccount, _ := sc.NewClient()
+	//
+	//solAccount.CreateSmartContract(ctx, 0)
 
 	srv := newServer(store, ctx, port)
 	srv.client.ClientID = viper.GetString("client_id")

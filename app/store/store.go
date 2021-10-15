@@ -11,8 +11,3 @@ type Store struct {
 func NewStore(conn *pgx.Conn) *Store {
 	return &Store{Conn: conn}
 }
-
-func (s Store) FindContracts(user_id string) ([]Contract, error) {
-
-	return nil, nil
-}
