@@ -2,8 +2,10 @@ package app
 
 import (
 	"context"
+	"flight_app/app/sc"
 	event "flight_app/app/store"
 	"github.com/jackc/pgx/v4"
+	"github.com/portto/solana-go-sdk/common"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"net/http"
@@ -64,12 +66,6 @@ func Run(configPath string, skipMigration bool) {
 
 	log.Infof("Connected!")
 
-	//ctx, cancel := context.WithCancel(context.Background())
-	//defer cancel()
-
-	//interrupt := make(chan os.Signal, 1)
-	//signal.Notify(interrupt, os.Interrupt)
-
 	//scheduler := event.NewScheduler(pool, eventListeners)
 	//scheduler.CheckEventsInInterval(ctx, 10*time.Second)
 	//
@@ -83,9 +79,10 @@ func Run(configPath string, skipMigration bool) {
 	listenAddr := viper.GetString("listen") + ":" + port
 	log.Infof("Starting HTTP server at %s...", listenAddr)
 
-	//solAccount, _ := sc.NewClient()
-	//
-	//solAccount.CreateSmartContract(ctx, 0)
+	programID := viper.GetString("program_id")
+	solAccount, _ := sc.NewClient(common.PublicKeyFromString(programID))
+
+	solAccount.CreateSmartContract(ctx, 0)
 
 	srv := newServer(store, ctx, port)
 	srv.client.ClientID = viper.GetString("client_id")
