@@ -87,7 +87,7 @@ func (s *Store) GetContractsByUser(ctx context.Context, userID string) ([]*Contr
 
 	var contracts []*ContractsInfo
 
-	rows, err := s.Conn.Query(ctx, "SELECT id, flight_number, status, ticket_price FROM contracts WHERE user_id = $1", userID)
+	rows, err := s.Conn.Query(ctx, "SELECT id, flight_number, status, ticket_price FROM contracts WHERE user_id = $1 ORDER BY id DESC", userID)
 	if err != nil {
 		log.Errorf("Unable to SELECT: %v\n", err)
 		return nil, err
@@ -121,7 +121,8 @@ func (s *Store) GetContractsByUser(ctx context.Context, userID string) ([]*Contr
 func (s *Store) GetPayouts(ctx context.Context, userID string) ([]*PayoutsInfo, error) {
 
 	var payouts []*PayoutsInfo
-	rows, err := s.Conn.Query(ctx, "SELECT c.id, pa.customer_id, c.ticket_price, c.flight_number FROM contracts c left join payments pa on c.id = pa.contract_id WHERE c.user_id = $1 AND status = $2 AND payment = $3", userID, "cancelled", true)
+	rows, err := s.Conn.Query(ctx, "SELECT c.id, pa.customer_id, c.ticket_price, c.flight_number FROM contracts c "+
+		"left join payments pa on c.id = pa.contract_id WHERE c.user_id = $1 AND status = $2 AND payment = $3", userID, "cancelled", true)
 	if err != nil {
 		log.Errorf("Unable to SELECT: %v\n", err)
 		return nil, err
