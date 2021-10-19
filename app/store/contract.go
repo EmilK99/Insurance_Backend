@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/jackc/pgx/v4"
 	log "github.com/sirupsen/logrus"
-	"strconv"
 )
 
 func (s *Store) CreateContract(ctx context.Context, c *Contract) error {
@@ -47,20 +46,18 @@ func (s *Store) CreateContract(ctx context.Context, c *Contract) error {
 	return nil
 }
 
-func (s *Store) VerifyPayment(ctx context.Context, contractId, paySystem, customerID string) error {
-
-	id, _ := strconv.ParseInt(contractId, 10, 64)
+func (s *Store) VerifyPayment(ctx context.Context, contractId int, paySystem, customerID string) error {
 
 	_, err := s.Conn.Exec(ctx,
 		"UPDATE contracts SET payment=true WHERE id=$1",
-		id)
+		contractId)
 	if err != nil {
 		log.Errorf("Unable to UPDATE: %v\n", err)
 		return err
 	}
 
 	_, err = s.Conn.Exec(ctx,
-		"INSERT INTO payments (contract_id, pay_system, customer_id) VALUES ($1, $2, $3)", id, paySystem, customerID)
+		"INSERT INTO payments (contract_id, pay_system, customer_id) VALUES ($1, $2, $3)", contractId, paySystem, customerID)
 	if err != nil {
 		log.Errorf("Unable to UPDATE: %v\n", err)
 		return err
@@ -90,7 +87,7 @@ func (s *Store) GetContractsByUser(ctx context.Context, userID string) ([]*Contr
 
 	var contracts []*ContractsInfo
 
-	rows, err := s.Conn.Query(ctx, "SELECT id, flight_number, status, ticket_price FROM contracts WHERE user_id = $1", userID)
+	rows, err := s.Conn.Query(ctx, "SELECT id, flight_number, status, ticket_price, fee FROM contracts WHERE user_id = $1 ORDER BY id DESC", userID)
 	if err != nil {
 		log.Errorf("Unable to SELECT: %v\n", err)
 		return nil, err
@@ -100,14 +97,15 @@ func (s *Store) GetContractsByUser(ctx context.Context, userID string) ([]*Contr
 
 	for rows.Next() {
 		row := new(ContractsInfo)
-		err := rows.Scan(&row.ContractID, &row.FlightNumber, &row.Status, &row.Reward)
+		var fee float32
+		err := rows.Scan(&row.ContractID, &row.FlightNumber, &row.Status, &row.Reward, &fee)
 		if err != nil {
 			log.Errorf("Unable to scan: %v\n", err)
 			return nil, err
 		}
 
-		if row.Status != "cancelled" {
-			row.Reward = 0
+		if row.Status != "cancelled" && row.Status != "paid" {
+			row.Reward = fee
 		}
 
 		contracts = append(contracts, row)
@@ -124,7 +122,8 @@ func (s *Store) GetContractsByUser(ctx context.Context, userID string) ([]*Contr
 func (s *Store) GetPayouts(ctx context.Context, userID string) ([]*PayoutsInfo, error) {
 
 	var payouts []*PayoutsInfo
-	rows, err := s.Conn.Query(ctx, "SELECT c.id, pa.customer_id, c.ticket_price, c.flight_number FROM contracts c left join payments pa on c.id = pa.contract_id WHERE c.user_id = $1 AND status = $2", userID, "cancelled")
+	rows, err := s.Conn.Query(ctx, "SELECT c.id, pa.customer_id, c.ticket_price, c.flight_number FROM contracts c "+
+		"left join payments pa on c.id = pa.contract_id WHERE c.user_id = $1 AND status = $2 AND payment = $3", userID, "cancelled", true)
 	if err != nil {
 		log.Errorf("Unable to SELECT: %v\n", err)
 		return nil, err

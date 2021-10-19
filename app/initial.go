@@ -5,6 +5,7 @@ import (
 	"flight_app/app/sc"
 	event "flight_app/app/store"
 	"github.com/jackc/pgx/v4"
+	"github.com/portto/solana-go-sdk/client/rpc"
 	"github.com/portto/solana-go-sdk/common"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -80,11 +81,10 @@ func Run(configPath string, skipMigration bool) {
 	log.Infof("Starting HTTP server at %s...", listenAddr)
 
 	programID := viper.GetString("program_id")
-	solAccount, _ := sc.NewClient(common.PublicKeyFromString(programID))
+	privateKey := viper.GetString("solana_fee_payer_pk")
+	solClient, _ := sc.NewClient(common.PublicKeyFromString(programID), privateKey, rpc.DevnetRPCEndpoint)
 
-	solAccount.CreateSmartContract(ctx, 0)
-
-	srv := newServer(store, ctx, port)
+	srv := newServer(store, ctx, solClient, port)
 	srv.client.ClientID = viper.GetString("client_id")
 	srv.client.SecretID = viper.GetString("secret_id")
 	err = srv.client.Initialize(ctx)
