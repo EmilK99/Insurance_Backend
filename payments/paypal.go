@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/plutov/paypal/v4"
 	"strconv"
+	"time"
 )
 
 type Client struct {
@@ -35,7 +36,7 @@ func (c *Client) CreatePayout(ctx context.Context, payouts []*store.PayoutsInfo)
 	// Set payout item with Venmo wallet
 	payout := paypal.Payout{
 		SenderBatchHeader: &paypal.SenderBatchHeader{
-			SenderBatchID: "Payouts_Contract",
+			SenderBatchID: fmt.Sprintf("Payouts for contract #%v", time.Now().Unix()),
 			EmailSubject:  "You have a payout!",
 			EmailMessage:  "You have received a payout! Thanks for using our service!",
 		},
