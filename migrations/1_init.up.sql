@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS contracts
     ticket_price  numeric                                                not null,
     fee           numeric                                                not null,
     sc_account    varchar,
+    sc_key        varchar,
     payment       boolean default false,
     flight_date   integer                                                not null,
     status varchar default 'waiting' not null

@@ -11,8 +11,6 @@ import (
 	"log"
 )
 
-var key = []byte{239, 135, 109, 127, 74, 161, 217, 168, 151, 232, 108, 167, 47, 189, 243, 246, 126, 215, 7, 209, 223, 231, 174, 124, 129, 82, 222, 251, 212, 186, 137, 242, 140, 230, 149, 19, 121, 132, 205, 249, 133, 114, 200, 173, 189, 139, 120, 79, 87, 207, 112, 93, 201, 147, 1, 136, 92, 172, 123, 165, 67, 116, 60, 254}
-
 type Client struct {
 	Client    *client.Client
 	Account   types.Account
@@ -38,19 +36,19 @@ func NewClient(programID common.PublicKey, privateKey, endpoint string) (*Client
 	return &Client{Client: c, Account: acc, ProgramID: programID}, nil
 }
 
-func (cl *Client) CreateInsuranceContract(ctx context.Context, contractID int) (string, error) {
+func (cl *Client) CreateInsuranceContract(ctx context.Context, contractID int) (*types.Account, error) {
 	contractAccount := types.NewAccount()
 	log.Println("contract account:", contractAccount.PublicKey.ToBase58())
 	log.Println(base58.Encode(contractAccount.PrivateKey))
 
 	rentExemptionBalance, err := cl.Client.GetMinimumBalanceForRentExemption(ctx, InsuranceAccountSize)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	res, err := cl.Client.GetRecentBlockhash(ctx)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	rawTx, err := types.CreateRawTransaction(types.CreateRawTransactionParam{
@@ -73,17 +71,17 @@ func (cl *Client) CreateInsuranceContract(ctx context.Context, contractID int) (
 		RecentBlockHash: res.Blockhash,
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	txhash, err := cl.Client.SendRawTransaction(ctx, rawTx)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	log.Println("txhash:", txhash)
 
-	return base58.Encode(contractAccount.PrivateKey), nil
+	return &contractAccount, nil
 }
 
 func (cl *Client) CloseInsuranceContract(ctx context.Context, accountKey string) error {
