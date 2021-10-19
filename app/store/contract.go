@@ -87,7 +87,7 @@ func (s *Store) GetContractsByUser(ctx context.Context, userID string) ([]*Contr
 
 	var contracts []*ContractsInfo
 
-	rows, err := s.Conn.Query(ctx, "SELECT id, flight_number, status, ticket_price FROM contracts WHERE user_id = $1 ORDER BY id DESC", userID)
+	rows, err := s.Conn.Query(ctx, "SELECT id, flight_number, status, ticket_price, fee FROM contracts WHERE user_id = $1 ORDER BY id DESC", userID)
 	if err != nil {
 		log.Errorf("Unable to SELECT: %v\n", err)
 		return nil, err
@@ -97,14 +97,15 @@ func (s *Store) GetContractsByUser(ctx context.Context, userID string) ([]*Contr
 
 	for rows.Next() {
 		row := new(ContractsInfo)
-		err := rows.Scan(&row.ContractID, &row.FlightNumber, &row.Status, &row.Reward)
+		var fee float32
+		err := rows.Scan(&row.ContractID, &row.FlightNumber, &row.Status, &row.Reward, &fee)
 		if err != nil {
 			log.Errorf("Unable to scan: %v\n", err)
 			return nil, err
 		}
 
-		if row.Status != "cancelled" {
-			row.Reward = 0
+		if row.Status != "cancelled" && row.Status != "paid" {
+			row.Reward = fee
 		}
 
 		contracts = append(contracts, row)

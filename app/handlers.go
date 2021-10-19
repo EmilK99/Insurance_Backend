@@ -390,6 +390,8 @@ func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	log.Println(newPayouts)
+
 	err = s.client.CreatePayout(s.ctx, newPayouts)
 	if err != nil {
 		w.WriteHeader(500)
