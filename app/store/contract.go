@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/jackc/pgx/v4"
 	log "github.com/sirupsen/logrus"
-	"strconv"
 )
 
 func (s *Store) CreateContract(ctx context.Context, c *Contract) error {
@@ -47,20 +46,18 @@ func (s *Store) CreateContract(ctx context.Context, c *Contract) error {
 	return nil
 }
 
-func (s *Store) VerifyPayment(ctx context.Context, contractId, paySystem, customerID string) error {
-
-	id, _ := strconv.ParseInt(contractId, 10, 64)
+func (s *Store) VerifyPayment(ctx context.Context, contractId int, paySystem, customerID string) error {
 
 	_, err := s.Conn.Exec(ctx,
 		"UPDATE contracts SET payment=true WHERE id=$1",
-		id)
+		contractId)
 	if err != nil {
 		log.Errorf("Unable to UPDATE: %v\n", err)
 		return err
 	}
 
 	_, err = s.Conn.Exec(ctx,
-		"INSERT INTO payments (contract_id, pay_system, customer_id) VALUES ($1, $2, $3)", id, paySystem, customerID)
+		"INSERT INTO payments (contract_id, pay_system, customer_id) VALUES ($1, $2, $3)", contractId, paySystem, customerID)
 	if err != nil {
 		log.Errorf("Unable to UPDATE: %v\n", err)
 		return err

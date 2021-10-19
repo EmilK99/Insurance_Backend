@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"flight_app/app/api"
+	"flight_app/app/sc"
 	store2 "flight_app/app/store"
 	"flight_app/payments"
 	"github.com/gorilla/mux"
@@ -12,21 +13,22 @@ import (
 )
 
 type server struct {
-	ctx     context.Context
-	router  http.Handler
-	store   *store2.Store
-	client  *payments.Client
-	port    string
-	aeroApi api.AeroAPI
+	ctx       context.Context
+	router    http.Handler
+	store     *store2.Store
+	client    *payments.Client
+	solClient *sc.Client
+	port      string
+	aeroApi   api.AeroAPI
 }
 
-func newServer(store *store2.Store, ctx context.Context, port string) *server {
+func newServer(store *store2.Store, ctx context.Context, solClient *sc.Client, port string) *server {
 	var aeroAPI api.AeroAPI
 	aeroAPI.Username = viper.GetString("aeroapi_username")
 	aeroAPI.APIKey = viper.GetString("aeroapi_apikey")
 	aeroAPI.URL = "https://" + aeroAPI.Username + ":" + aeroAPI.APIKey + "@flightxml.flightaware.com/json/FlightXML2/"
 
-	return &server{ctx: ctx, store: store, client: &payments.Client{}, port: port, aeroApi: aeroAPI}
+	return &server{ctx: ctx, store: store, solClient: solClient, client: &payments.Client{}, port: port, aeroApi: aeroAPI}
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -58,9 +60,6 @@ func (s *server) configureRouter() {
 
 	//paypal cancel
 	router.HandleFunc("/api/cancel", s.HandlerCancel).Methods("GET")
-
-	//register webhook endpoint
-	router.HandleFunc("/api/ipn", s.IPNHandler).Methods("POST")
 
 	//withdraw successful contract
 	router.HandleFunc("/api/withdraw", s.HandleWithdrawPremium).Methods("POST")

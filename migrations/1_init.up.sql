@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS contracts
     date          timestamp with time zone                               not null,
     ticket_price  numeric                                                not null,
     fee           numeric                                                not null,
-    create_tx     text,
+    sc_account    varchar,
     payment       boolean default false,
     flight_date   integer                                                not null,
     status varchar default 'waiting' not null
