@@ -51,7 +51,7 @@ func (s *server) HandleGetFlights(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("Unable to encode json: %v", err)
 		w.WriteHeader(200)
-		_ = json.NewEncoder(w).Encode(response{})
+		_ = json.NewEncoder(w).Encode(response{Flights: make([]int64, 0)})
 		return
 	}
 
