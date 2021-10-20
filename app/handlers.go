@@ -41,25 +41,29 @@ func (s *server) HandleGetFlights(w http.ResponseWriter, r *http.Request) {
 		FlightNumber string `json:"flight_number"`
 	}
 
-	var res struct {
+	type response struct {
 		FlightNumber string  `json:"flight_number"`
 		Count        int     `json:"count"`
 		Flights      []int64 `json:"flights"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil { // bad request
-		w.WriteHeader(400)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(400), "message": err.Error(), "status": "Error"})
+	if err != nil {
+		log.Errorf("Unable to encode json: %v", err)
+		w.WriteHeader(200)
+		_ = json.NewEncoder(w).Encode(response{})
 		return
 	}
 
 	flights, err := s.aeroApi.GetFlights(req.FlightNumber)
 	if err != nil {
-		w.WriteHeader(422)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
+		log.Errorf("Unable to encode json: %v", err)
+		w.WriteHeader(200)
+		_ = json.NewEncoder(w).Encode(response{})
 		return
 	}
+
+	var res response
 
 	sortkeys.Int64s(flights)
 	res.FlightNumber = req.FlightNumber
@@ -70,7 +74,8 @@ func (s *server) HandleGetFlights(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
 		log.Errorf("Unable to encode json: %v", err)
-		w.WriteHeader(500)
+		w.WriteHeader(200)
+		_ = json.NewEncoder(w).Encode(response{})
 		return
 	}
 }
