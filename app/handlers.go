@@ -6,6 +6,7 @@ import (
 	"flight_app/app/api"
 	"flight_app/app/store"
 	"flight_app/payments"
+	"github.com/gogo/protobuf/sortkeys"
 	"github.com/plutov/paypal/v4"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -60,10 +61,12 @@ func (s *server) HandleGetFlights(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sortkeys.Int64s(flights)
 	res.FlightNumber = req.FlightNumber
 	res.Flights = flights
 	res.Count = len(flights)
 
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
 		log.Errorf("Unable to encode json: %v", err)
