@@ -46,7 +46,7 @@ func (a AeroAPI) GetFlightInfoEx(flightNumber string) (*FlightInfo, error) {
 	aim := 0
 	if len(flights) > 1 {
 		for i := 1; i < len(flights); i++ {
-			if time.Now().After(time.Unix(flights[i].FiledDeparturetime, 0)) {
+			if time.Now().After(time.Unix(flights[i].FiledDeparturetime, 0)) && flights[i].Actualdeparturetime == 0 {
 				aim = i - 1
 				break
 			}

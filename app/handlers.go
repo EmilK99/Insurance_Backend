@@ -41,8 +41,9 @@ func (s *server) HandleGetFlights(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var res struct {
-		Count   int     `json:"count"`
-		Flights []int64 `json:"flights"`
+		FlightNumber string  `json:"flight_number"`
+		Count        int     `json:"count"`
+		Flights      []int64 `json:"flights"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -59,6 +60,7 @@ func (s *server) HandleGetFlights(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	res.FlightNumber = req.FlightNumber
 	res.Flights = flights
 	res.Count = len(flights)
 
