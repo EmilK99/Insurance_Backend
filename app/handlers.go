@@ -42,16 +42,16 @@ func (s *server) HandleGetFlights(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type response struct {
-		FlightNumber string  `json:"flight_number"`
-		Count        int     `json:"count"`
-		Flights      []int64 `json:"flights"`
+		FlightNumber string      `json:"flight_number"`
+		Count        int         `json:"count"`
+		Flights      []time.Time `json:"flights"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		log.Errorf("Unable to encode json: %v", err)
 		w.WriteHeader(200)
-		_ = json.NewEncoder(w).Encode(response{Flights: make([]int64, 0)})
+		_ = json.NewEncoder(w).Encode(response{Flights: make([]time.Time, 0)})
 		return
 	}
 
@@ -66,9 +66,13 @@ func (s *server) HandleGetFlights(w http.ResponseWriter, r *http.Request) {
 	var res response
 
 	sortkeys.Int64s(flights)
+
+	for i := range flights {
+		res.Flights = append(res.Flights, time.Unix(flights[i], 0))
+	}
+
 	res.FlightNumber = req.FlightNumber
-	res.Flights = flights
-	res.Count = len(flights)
+	res.Count = len(res.Flights)
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err = json.NewEncoder(w).Encode(res)
