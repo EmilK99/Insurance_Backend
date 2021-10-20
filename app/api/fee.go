@@ -56,6 +56,45 @@ func (a AeroAPI) GetFlightInfoEx(flightNumber string) (*FlightInfo, error) {
 	return &flights[aim], nil
 }
 
+func (a AeroAPI) GetFlights(flightNumber string) ([]int64, error) {
+	aeroApiURLStr := a.NewFlightInfoExURL(flightNumber)
+
+	client := &http.Client{}
+	re, _ := http.NewRequest("POST", aeroApiURLStr, nil)
+
+	resp, err := client.Do(re)
+	if err != nil {
+		return nil, err
+	}
+
+	flightInfoEx := new(FlightInfoExResponse)
+	err = json.NewDecoder(resp.Body).Decode(&flightInfoEx)
+	if err != nil {
+		return nil, err
+	}
+
+	flights := flightInfoEx.FlightInfoExResult.Flights
+
+	if len(flights) == 0 {
+		return nil, errors.New(fmt.Sprintf("Info about this flight doesn't exist: %s", flightNumber))
+	}
+
+	if flights[0].Actualdeparturetime != 0 || time.Now().After(time.Unix(flights[0].FiledDeparturetime, 0)) {
+		return nil, errors.New(fmt.Sprintf("Flight already departured: %s", flightNumber))
+	}
+
+	flight := make([]int64, 0)
+	if len(flights) > 1 {
+		for i := 0; i < len(flights); i++ {
+			if time.Now().Before(time.Unix(flights[i].FiledDeparturetime, 0)) {
+				flight = append(flight, flights[i].FiledDeparturetime)
+			}
+		}
+	}
+
+	return flight, nil
+}
+
 func (a AeroAPI) GetCancellationRate(f *FlightInfo) (float32, error) {
 	aeroApiURLStr := a.NewCancellationRateURL(f.Ident)
 

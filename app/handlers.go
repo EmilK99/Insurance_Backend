@@ -35,6 +35,41 @@ var ContractsMock = []*store.ContractsInfo{
 	},
 }
 
+func (s *server) HandleGetFlights(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		FlightNumber string `json:"flight_number"`
+	}
+
+	var res struct {
+		Count   int     `json:"count"`
+		Flights []int64 `json:"flights"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil { // bad request
+		w.WriteHeader(400)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(400), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	flights, err := s.aeroApi.GetFlights(req.FlightNumber)
+	if err != nil {
+		w.WriteHeader(422)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	res.Flights = flights
+	res.Count = len(flights)
+
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		log.Errorf("Unable to encode json: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+}
+
 func (s *server) HandleGetContracts(w http.ResponseWriter, r *http.Request) {
 
 	var req store.GetContractsReq
