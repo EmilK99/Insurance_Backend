@@ -38,6 +38,9 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *server) configureRouter() {
 	router := mux.NewRouter()
 	//fee calculation
+	router.HandleFunc("/api/flights", s.HandleGetFlights).Methods("POST")
+
+	//fee calculation
 	router.HandleFunc("/api/calculate", s.CalculateFeeHandler).Methods("POST")
 
 	//contract create

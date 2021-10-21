@@ -119,35 +119,38 @@ func (s *Store) GetContractsByUser(ctx context.Context, userID string) ([]*Contr
 	return contracts, nil
 }
 
-func (s *Store) GetPayouts(ctx context.Context, userID string) ([]*PayoutsInfo, error) {
+func (s *Store) GetPayouts(ctx context.Context, userID string) ([]*PayoutsInfo, []string, error) {
 
 	var payouts []*PayoutsInfo
-	rows, err := s.Conn.Query(ctx, "SELECT c.id, pa.customer_id, c.ticket_price, c.flight_number FROM contracts c "+
+	var accountKeys []string
+	rows, err := s.Conn.Query(ctx, "SELECT c.id, pa.customer_id, c.ticket_price, c.flight_number, c.sc_key FROM contracts c "+
 		"left join payments pa on c.id = pa.contract_id WHERE c.user_id = $1 AND status = $2 AND payment = $3", userID, "cancelled", true)
 	if err != nil {
 		log.Errorf("Unable to SELECT: %v\n", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	defer rows.Close()
 
 	for rows.Next() {
 		row := new(PayoutsInfo)
-		err := rows.Scan(&row.ContractId, &row.UserEmail, &row.TicketPrice, &row.FlightNumber)
+		var contractAccountKey string
+		err := rows.Scan(&row.ContractId, &row.UserEmail, &row.TicketPrice, &row.FlightNumber, &contractAccountKey)
 		if err != nil {
 			log.Errorf("Unable to scan: %v\n", err)
-			return nil, err
+			return nil, nil, err
 		}
 		row.PaySystem = "Paypal"
 		payouts = append(payouts, row)
+		accountKeys = append(accountKeys, contractAccountKey)
 	}
 
 	if err = rows.Err(); err != nil {
 		log.Fatal(err)
-		return nil, err
+		return nil, nil, err
 	}
 
-	return payouts, nil
+	return payouts, accountKeys, nil
 }
 
 func (s *Store) UpdatePaidPayouts(ctx context.Context, payouts []*PayoutsInfo) error {

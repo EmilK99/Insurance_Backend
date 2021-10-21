@@ -6,6 +6,7 @@ import (
 	"flight_app/app/api"
 	"flight_app/app/store"
 	"flight_app/payments"
+	"github.com/gogo/protobuf/sortkeys"
 	"github.com/plutov/paypal/v4"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -33,6 +34,54 @@ var ContractsMock = []*store.ContractsInfo{
 		Status:       "cancelled",
 		Reward:       299,
 	},
+}
+
+func (s *server) HandleGetFlights(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		FlightNumber string `json:"flight_number"`
+	}
+
+	type response struct {
+		FlightNumber string      `json:"flight_number"`
+		Count        int         `json:"count"`
+		Flights      []time.Time `json:"flights"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		log.Errorf("Unable to encode json: %v", err)
+		w.WriteHeader(200)
+		_ = json.NewEncoder(w).Encode(response{Flights: make([]time.Time, 0)})
+		return
+	}
+
+	flights, err := s.aeroApi.GetFlights(req.FlightNumber)
+	if err != nil {
+		log.Errorf("Unable to encode json: %v", err)
+		w.WriteHeader(200)
+		_ = json.NewEncoder(w).Encode(response{Flights: make([]time.Time, 0)})
+		return
+	}
+
+	var res response
+
+	sortkeys.Int64s(flights)
+
+	for i := range flights {
+		res.Flights = append(res.Flights, time.Unix(flights[i], 0))
+	}
+
+	res.FlightNumber = req.FlightNumber
+	res.Count = len(res.Flights)
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		log.Errorf("Unable to encode json: %v", err)
+		w.WriteHeader(200)
+		_ = json.NewEncoder(w).Encode(response{Flights: make([]time.Time, 0)})
+		return
+	}
 }
 
 func (s *server) HandleGetContracts(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +122,7 @@ func (s *server) HandleGetPayouts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payouts, err := s.store.GetPayouts(s.ctx, req.UserID)
+	payouts, _, err := s.store.GetPayouts(s.ctx, req.UserID)
 	if err != nil {
 		w.WriteHeader(422)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
@@ -90,14 +139,6 @@ func (s *server) HandleGetPayouts(w http.ResponseWriter, r *http.Request) {
 		res.Contracts = append(res.Contracts, &ctr)
 		res.TotalPayout += payouts[i].TicketPrice
 	}
-
-	//res.Contracts = ContractsMock
-	//
-	//for i := range ContractsMock {
-	//	if ContractsMock[i].Status == "cancelled" {
-	//		res.TotalPayout += ContractsMock[i].Reward
-	//	}
-	//}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err = json.NewEncoder(w).Encode(res)
@@ -373,7 +414,7 @@ func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payouts, err := s.store.GetPayouts(s.ctx, req.UserID)
+	payouts, keys, err := s.store.GetPayouts(s.ctx, req.UserID)
 	if err != nil {
 		w.WriteHeader(422)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": err.Error(), "status": "Error"})
@@ -390,8 +431,6 @@ func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Println(newPayouts)
-
 	err = s.client.CreatePayout(s.ctx, newPayouts)
 	if err != nil {
 		w.WriteHeader(500)
@@ -404,6 +443,14 @@ func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
 		return
+	}
+
+	for i := range keys {
+		err = s.solClient.CloseInsuranceContract(s.ctx, keys[i])
+		if err != nil {
+			log.Errorf("Unable to close contract: %v", err)
+			return
+		}
 	}
 
 	w.WriteHeader(200)
