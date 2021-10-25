@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS contracts
     sc_key        varchar,
     payment       boolean default false,
     flight_date   integer                                                not null,
-    status varchar default 'waiting' not null
+    status varchar default 'pending' not null
 );
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

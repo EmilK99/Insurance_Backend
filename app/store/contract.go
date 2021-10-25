@@ -49,7 +49,7 @@ func (s *Store) CreateContract(ctx context.Context, c *Contract) error {
 func (s *Store) VerifyPayment(ctx context.Context, contractId int, paySystem, customerID string) error {
 
 	_, err := s.Conn.Exec(ctx,
-		"UPDATE contracts SET payment=true WHERE id=$1",
+		"UPDATE contracts SET payment=true, status='waiting' WHERE id=$1",
 		contractId)
 	if err != nil {
 		log.Errorf("Unable to UPDATE: %v\n", err)
@@ -87,7 +87,7 @@ func (s *Store) GetContractsByUser(ctx context.Context, userID string) ([]*Contr
 
 	var contracts []*ContractsInfo
 
-	rows, err := s.Conn.Query(ctx, "SELECT id, flight_number, status, ticket_price, fee FROM contracts WHERE user_id = $1 ORDER BY id DESC", userID)
+	rows, err := s.Conn.Query(ctx, "SELECT id, flight_number, status, ticket_price, fee FROM contracts WHERE user_id = $1 and status != 'pending' ORDER BY id DESC", userID)
 	if err != nil {
 		log.Errorf("Unable to SELECT: %v\n", err)
 		return nil, err

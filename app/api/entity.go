@@ -17,6 +17,7 @@ type CalculateFeeRequest struct {
 	TicketPrice  float32 `json:"ticket_price"`
 	Cancellation bool    `json:"cancellation"`
 	Delay        bool    `json:"delay"`
+	FlightDate   int64   `json:"flight_date"`
 }
 
 type CalculateFeeResponse struct {

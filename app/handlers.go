@@ -15,43 +15,22 @@ import (
 	"time"
 )
 
-var ContractsMock = []*store.ContractsInfo{
-	{
-		ContractID:   12333,
-		FlightNumber: "AAL123",
-		Status:       "cancelled",
-		Reward:       220,
-	},
-	{
-		ContractID:   12311,
-		FlightNumber: "BAW321",
-		Status:       "cancelled",
-		Reward:       145,
-	},
-	{
-		ContractID:   12312,
-		FlightNumber: "RAC333",
-		Status:       "cancelled",
-		Reward:       299,
-	},
-}
-
 func (s *server) HandleGetFlights(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		FlightNumber string `json:"flight_number"`
 	}
 
 	type response struct {
-		FlightNumber string      `json:"flight_number"`
-		Count        int         `json:"count"`
-		Flights      []time.Time `json:"flights"`
+		FlightNumber string  `json:"flight_number"`
+		Count        int     `json:"count"`
+		Flights      []int64 `json:"flights"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		log.Errorf("Unable to encode json: %v", err)
 		w.WriteHeader(200)
-		_ = json.NewEncoder(w).Encode(response{Flights: make([]time.Time, 0)})
+		_ = json.NewEncoder(w).Encode(response{Flights: make([]int64, 0)})
 		return
 	}
 
@@ -59,7 +38,7 @@ func (s *server) HandleGetFlights(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("Unable to encode json: %v", err)
 		w.WriteHeader(200)
-		_ = json.NewEncoder(w).Encode(response{Flights: make([]time.Time, 0)})
+		_ = json.NewEncoder(w).Encode(response{Flights: make([]int64, 0)})
 		return
 	}
 
@@ -67,10 +46,7 @@ func (s *server) HandleGetFlights(w http.ResponseWriter, r *http.Request) {
 
 	sortkeys.Int64s(flights)
 
-	for i := range flights {
-		res.Flights = append(res.Flights, time.Unix(flights[i], 0))
-	}
-
+	res.Flights = flights
 	res.FlightNumber = req.FlightNumber
 	res.Count = len(res.Flights)
 
@@ -79,7 +55,7 @@ func (s *server) HandleGetFlights(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("Unable to encode json: %v", err)
 		w.WriteHeader(200)
-		_ = json.NewEncoder(w).Encode(response{Flights: make([]time.Time, 0)})
+		_ = json.NewEncoder(w).Encode(response{Flights: make([]int64, 0)})
 		return
 	}
 }
@@ -160,7 +136,7 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	flightInfo, err := s.aeroApi.GetFlightInfoEx(req.FlightNumber)
+	flightInfo, err := s.aeroApi.GetFlightInfoEx(req.FlightNumber, req.FlightDate)
 	if err != nil {
 		log.Errorf("Unable to get flight info: %v", err)
 		w.WriteHeader(500)
@@ -168,7 +144,7 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	premium, err := s.aeroApi.Calculate(req.FlightNumber, req.TicketPrice)
+	premium, err := s.aeroApi.Calculate(req.FlightNumber, req.FlightDate, req.TicketPrice)
 	if err != nil {
 		log.Errorf("Unable to calculate fee: %v", err)
 		w.WriteHeader(500)
@@ -229,11 +205,15 @@ func (s *server) CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil { // bad request
 		w.WriteHeader(400)
-
 		return
 	}
 
-	premium, err := s.aeroApi.Calculate(req.FlightNumber, req.TicketPrice)
+	if req.FlightDate == 0 {
+		w.WriteHeader(400)
+		return
+	}
+
+	premium, err := s.aeroApi.Calculate(req.FlightNumber, req.FlightDate, req.TicketPrice)
 	if err != nil {
 		log.Errorf("Unable to calculate fee: %v", err)
 		w.WriteHeader(500)
@@ -457,11 +437,5 @@ func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(200), "message": "Withdraw requested", "status": "successful"})
 	if err != nil {
 		log.Error(err)
-	}
-}
-
-func HandleRefreshMock(w http.ResponseWriter, r *http.Request) {
-	for i := range ContractsMock {
-		ContractsMock[i].Status = "cancelled"
 	}
 }

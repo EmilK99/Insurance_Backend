@@ -67,12 +67,6 @@ func Run(configPath string, skipMigration bool) {
 
 	log.Infof("Connected!")
 
-	//scheduler := event.NewScheduler(pool, eventListeners)
-	//scheduler.CheckEventsInInterval(ctx, 10*time.Second)
-	//
-	//scheduler.Schedule("checkStatus", "BAW920", time.Now().Add(10*time.Second))
-	//scheduler.Schedule("checkStatus", "CCA680", time.Now().Add(20*time.Second))
-
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -99,6 +93,5 @@ func Run(configPath string, skipMigration bool) {
 		log.Fatalf("http.ListenAndServe: %v", err)
 	}
 
-	//<-ctx.Done()
 	log.Info("HTTP server terminated")
 }

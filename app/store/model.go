@@ -31,6 +31,7 @@ type GetContractsReq struct {
 type CreateContractRequest struct {
 	UserID       string  `json:"user_id"`
 	FlightNumber string  `json:"flight_number"`
+	FlightDate   int64   `json:"flight_date"`
 	TicketPrice  float32 `json:"ticket_price"`
 	Cancellation bool    `json:"cancellation"`
 	Delay        bool    `json:"delay"`
