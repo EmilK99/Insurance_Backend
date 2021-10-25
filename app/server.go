@@ -67,9 +67,5 @@ func (s *server) configureRouter() {
 	//withdraw successful contract
 	router.HandleFunc("/api/withdraw", s.HandleWithdrawPremium).Methods("POST")
 
-	//refresh withdraw mock
-	//TODO: temporary, remove when db will be connected
-	router.HandleFunc("/api/withdraw/refresh", HandleRefreshMock).Methods("GET")
-
 	s.router = cors.AllowAll().Handler(router)
 }

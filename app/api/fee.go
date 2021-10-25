@@ -16,7 +16,7 @@ type AeroAPI struct {
 	URL      string
 }
 
-func (a AeroAPI) GetFlightInfoEx(flightNumber string) (*FlightInfo, error) {
+func (a AeroAPI) GetFlightInfoEx(flightNumber string, flightDate int64) (*FlightInfo, error) {
 	aeroApiURLStr := a.NewFlightInfoExURL(flightNumber)
 
 	client := &http.Client{}
@@ -43,17 +43,19 @@ func (a AeroAPI) GetFlightInfoEx(flightNumber string) (*FlightInfo, error) {
 		return nil, errors.New(fmt.Sprintf("Flight already departured: %s", flightNumber))
 	}
 
-	aim := 0
-	if len(flights) > 1 {
-		for i := 1; i < len(flights); i++ {
-			if time.Now().After(time.Unix(flights[i].FiledDeparturetime, 0)) && flights[i].Actualdeparturetime == 0 {
-				aim = i - 1
-				break
-			}
+	flight := new(FlightInfo)
+	for i := range flights {
+		if flights[i].FiledDeparturetime == flightDate && flights[i].Actualdeparturetime == 0 {
+			flight = &flights[i]
+			break
 		}
 	}
 
-	return &flights[aim], nil
+	if flight.Ident == "" {
+		return nil, errors.New(fmt.Sprintf("Info about this flight doesn't exist: %s", flightNumber))
+	}
+
+	return flight, nil
 }
 
 func (a AeroAPI) GetFlights(flightNumber string) ([]int64, error) {
@@ -170,8 +172,8 @@ func (a AeroAPI) CalculateFee(f *FlightInfo, ticketPrice, cancelRate float32) (f
 	return fee, nil
 }
 
-func (a AeroAPI) Calculate(flightNumber string, ticketPrice float32) (float32, error) {
-	flightInfo, err := a.GetFlightInfoEx(flightNumber)
+func (a AeroAPI) Calculate(flightNumber string, flightDate int64, ticketPrice float32) (float32, error) {
+	flightInfo, err := a.GetFlightInfoEx(flightNumber, flightDate)
 	if err != nil {
 		log.Errorf("Unable to get flight info: %v", err)
 		return 0, err
