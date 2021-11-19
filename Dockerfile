@@ -18,7 +18,7 @@ FROM alpine
 WORKDIR /flightapp
 
 COPY --from=builder /app/flightappbackend ./
-COPY --from=builder /app/config/testing_flight_app.toml ./config/flight_app.toml
+COPY --from=builder /app/config/flight_app.toml ./config/flight_app.toml
 
 CMD /flightapp/flightappbackend
 

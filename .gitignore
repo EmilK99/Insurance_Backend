@@ -15,3 +15,10 @@
 # Dependency directories (remove the comment below to include it)
 vendor/
 /config/
+
+#Terraform
+.terraform
+terraform.tfstate
+terraform.tfstate.backup
+.terraform.tfstate.lock.info
+.terraform.lock.hcl

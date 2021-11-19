@@ -1,10 +1,10 @@
-version: '3.3'
+version: '3.9'
 services:
   flightapp_backend:
     build:
       context: .
       dockerfile: ./Dockerfile
-    image: blah
+    image: 706235040724.dkr.ecr.eu-central-1.amazonaws.com/flightapp_backend:v0.01
     restart: always
     depends_on:
       - database
