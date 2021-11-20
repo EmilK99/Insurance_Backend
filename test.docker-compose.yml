@@ -1,0 +1,21 @@
+version: '3.3'
+services:
+  flightapp_backend:
+    image: 706235040724.dkr.ecr.eu-central-1.amazonaws.com/flightapp_backend:v0.01
+    restart: always
+    depends_on:
+      - database
+    ports:
+      - 8080:8080
+  database:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=sEcRET_pASSw0rd
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=flightapp_db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:

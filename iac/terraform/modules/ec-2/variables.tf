@@ -25,3 +25,7 @@ variable "volume_size" {
 variable "key_name" {
   type    = string
 }
+
+variable "iam_instance_profile" {
+  type    = string
+}

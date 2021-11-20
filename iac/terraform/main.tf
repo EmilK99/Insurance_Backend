@@ -47,7 +47,7 @@
     source          = "./modules/security-groups"
     vpc_id = module.flightapp-backend-vpc.vpc_id
     internal_cidr_blocks = [module.flightapp-backend-subnet.cidr_block]
-    allowed_external_sg_addrss = ["94.180.117.169/32", "31.131.22.140/32",  "167.71.12.184/32"]
+    allowed_external_sg_addrss = ["94.180.117.169/32", "31.131.22.140/32",  "167.71.12.184/32", "176.59.148.217/32"]
     allowed_ssh_external_sg_addrss = ["94.180.117.169/32", "31.131.22.140/32", "167.71.12.184/32"]
   }
 
@@ -67,6 +67,8 @@
     volume_type     = "gp3"
     volume_size     = "30"
     key_name = module.flightapp-backend-ec2-key-pair.key_name
+    iam_instance_profile = module.flightapp-backend-instance-profile.profile_name
+
   }
 
   module "flightapp-internet-gateway" {
@@ -84,5 +86,24 @@
     source          = "./modules/vpc/modules/routing-table/module/route-table-association"
     vpc_id = module.flightapp-backend-vpc.vpc_id
     route_table_id = module.flightapp-route-table.routing_table_id
+  }
+
+  module "flightapp-backend-ec2-role" {
+    source          = "./modules/roles"
+  }
+
+  module "flightapp-ecr-policy" {
+    source          = "./modules/roles/modules/policy"
+  }
+
+  module "flightapp-ecr-policy-attachement" {
+    source          = "./modules/roles/modules/role-policy-attachement"
+    policy_arn      = module.flightapp-ecr-policy.policy_arn
+    role_name       = module.flightapp-backend-ec2-role.role_name
+  }
+
+  module "flightapp-backend-instance-profile" {
+    source          = "./modules/roles/modules/instance-profile"
+    role_name       = module.flightapp-backend-ec2-role.role_name
   }
 
