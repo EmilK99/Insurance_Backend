@@ -16,6 +16,18 @@
 vendor/
 /config/
 
+# IDEs and editors
+/.idea
+/web/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.env
+/aws.phar
+
 #Terraform
 .terraform
 terraform.tfstate
