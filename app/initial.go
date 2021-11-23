@@ -63,6 +63,8 @@ func Run(configPath string, skipMigration bool) {
 	}
 	defer conn.Close(ctx)
 
+	event.MigrateDatabase(ctx, conn)
+
 	store := event.NewStore(conn)
 
 	log.Infof("Connected!")
