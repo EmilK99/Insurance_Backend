@@ -8,3 +8,7 @@ create table if not exists payouts
     customer_id varchar                                                not null,
     amount float                                                not null
 );
+
+---- create above / drop below ----
+
+DROP TABLE IF EXISTS payouts;

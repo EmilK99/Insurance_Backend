@@ -6,8 +6,10 @@ go 1.16
 
 require (
 	github.com/gogo/protobuf v1.3.2
+	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgx/v4 v4.13.0
+	github.com/jackc/tern v1.12.5
 	github.com/mr-tron/base58 v1.2.0
 	github.com/plutov/paypal/v4 v4.4.0
 	github.com/portto/solana-go-sdk v1.8.1
