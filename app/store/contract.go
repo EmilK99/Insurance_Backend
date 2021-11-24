@@ -32,9 +32,9 @@ func (s *Store) CreateContract(ctx context.Context, c *Contract) error {
 			log.Errorf("Unable to UPDATE: %v\n", err)
 			return err
 		}
+		c.ID = check
 		return nil
 	}
-
 	err = s.Conn.QueryRow(ctx,
 		"INSERT INTO contracts (user_id, flight_number, flight_date, date, ticket_price, fee) VALUES ($1, $2, $3, $4, $5, $6) RETURNING ID",
 		c.UserID, c.FlightNumber, c.FlightDate, c.Date, c.TicketPrice, c.Fee,

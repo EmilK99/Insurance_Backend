@@ -179,8 +179,6 @@ func (a AeroAPI) Calculate(flightNumber string, flightDate int64, ticketPrice fl
 		return 0, err
 	}
 
-	//fmt.Println(flightInfo.FlightInfoExResult.Flights[0].FaFlightID)
-
 	cancelRate, err := a.GetCancellationRate(flightInfo)
 	if err != nil {
 		log.Errorf("Unable to get cancellation rate: %v", err)
