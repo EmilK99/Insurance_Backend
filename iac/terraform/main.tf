@@ -48,7 +48,7 @@
     vpc_id = module.flightapp-backend-vpc.vpc_id
     internal_cidr_blocks = [module.flightapp-backend-subnet.cidr_block]
     allowed_external_sg_addrss = ["94.180.117.169/32", "31.131.22.140/32",  "167.71.12.184/32", "176.59.148.217/32"]
-    allowed_ssh_external_sg_addrss = ["94.180.117.169/32", "31.131.22.140/32", "167.71.12.184/32"]
+    allowed_ssh_external_sg_addrss = ["94.180.117.169/32", "31.131.22.140/32", "167.71.12.184/32", "178.187.197.193/32"]
   }
 
   module "flightapp-ec2-network-interface" {
