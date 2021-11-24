@@ -283,7 +283,6 @@ func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	}
-
 	contractID, err := strconv.Atoi(res.PurchaseUnits[0].ReferenceID)
 	if err != nil {
 		log.Errorf("Unable to parse contractID: %v", err)
@@ -299,8 +298,7 @@ func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
 		return
 	}
-
-	if contract.Status != "waiting" || time.Unix(contract.FlightDate, 0).Before(time.Now()) {
+	if contract.Status != "pending" || time.Unix(contract.FlightDate, 0).Before(time.Now()) {
 		_, err = s.store.Conn.Exec(s.ctx,
 			"DELETE FROM contracts WHERE id=$1",
 			contractID)
