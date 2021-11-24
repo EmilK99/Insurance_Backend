@@ -13,8 +13,6 @@ CREATE TABLE IF NOT EXISTS contracts
     status varchar default 'pending' not null
 );
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 CREATE TABLE IF NOT EXISTS flights
 (
     id        serial
@@ -34,3 +32,11 @@ create table if not exists payments
     pay_system  varchar                                                not null,
     customer_id varchar                                                not null
 );
+
+---- create above / drop below ----
+
+DROP TABLE IF EXISTS flights;
+
+DROP TABLE IF EXISTS payments;
+
+DROP TABLE IF EXISTS contracts;
