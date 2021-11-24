@@ -19,6 +19,7 @@ WORKDIR /flightapp
 
 COPY --from=builder /app/flightappbackend ./
 COPY --from=builder /app/config/flight_app.toml ./config/flight_app.toml
+COPY --from=builder /app/app/store/migrations ./app/store/migrations
 
 CMD /flightapp/flightappbackend
 
