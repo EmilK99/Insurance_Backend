@@ -1,4 +1,4 @@
-package api
+package flightaware_api
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ func GetSuccessCancelURL(host string, tls bool) (string, string) {
 		url += "http://"
 	}
 	url += host
-	return url + "/api/success", url + "/api/cancel"
+	return url + "/flightaware_api/success", url + "/flightaware_api/cancel"
 }
 
 func (a AeroAPI) NewFlightInfoURL(ident string) string {
@@ -108,4 +108,16 @@ func (a AeroAPI) NewDeleteAlertURL(id int) string {
 	u.RawQuery = data.Encode()
 
 	return fmt.Sprintf("%v", u)
+}
+
+func (a AeroAPI) NewAirlineDelayRateURL() {
+
+}
+
+func (a AeroAPI) NewAirportDelayRateURL() {
+
+}
+
+func (a AeroAPI) NewScheduledDepTimeDelayURL() {
+
 }

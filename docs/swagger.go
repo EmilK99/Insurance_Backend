@@ -1,11 +1,11 @@
 package docs
 
 import (
-	"flight_app/app/api"
+	"flight_app/app/api/flightaware_api"
 	"flight_app/app/store"
 )
 
-// swagger:route POST /api/calculate Query idOfCalculateEndpoint
+// swagger:route POST /flightaware_api/calculate Query idOfCalculateEndpoint
 // Calculate returns calculated fee.
 // responses:
 //   200: calculateResponse
@@ -14,17 +14,17 @@ import (
 // swagger:response calculateResponse
 type calculateResponseWrapper struct {
 	// in:body
-	Body api.CalculateFeeResponse
+	Body flightaware_api.CalculateFeeResponse
 }
 
 // swagger:parameters idOfCalculateEndpoint
 type calculateParamsWrapper struct {
 	// Flight information.
 	// in:body
-	Body api.CalculateFeeRequest
+	Body flightaware_api.CalculateFeeRequest
 }
 
-// swagger:route POST /api/contract/create Query idOfContractCreateEndpoint
+// swagger:route POST /flightaware_api/contract/create Query idOfContractCreateEndpoint
 // Contract create returns fee and contractID.
 // responses:
 //   200: createContractResponse
@@ -43,7 +43,7 @@ type createContractParamsWrapper struct {
 	Body store.CreateContractRequest
 }
 
-// swagger:route POST /api/contracts Query idOfGetContractEndpoint
+// swagger:route POST /flightaware_api/contracts Query idOfGetContractEndpoint
 // GetContracts returns contracts of specified user
 // responses:
 //   200: []ContractsInfo

@@ -1,10 +1,11 @@
-package api
+package flightaware_api
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -143,7 +144,7 @@ func (a AeroAPI) GetMetarExInfo(f *FlightInfo) (*MetarExResponse, error) {
 	return metarEx, nil
 }
 
-func (a AeroAPI) CalculateFee(f *FlightInfo, ticketPrice, cancelRate float32) (float32, error) {
+func (a AeroAPI) CalculateCancellationFee(f *FlightInfo, ticketPrice, cancelRate float32) (float32, error) {
 	var fee float32
 	//cancel rate addition
 	fee += cancelRate * cancelRate / 2
@@ -164,7 +165,8 @@ func (a AeroAPI) CalculateFee(f *FlightInfo, ticketPrice, cancelRate float32) (f
 
 	windSpeed := metarEx.MetarExResult.Metar[0].WindSpeed
 
-	fee += 0.001 * float32(windSpeed^3)
+	fee += 0.001 * float32(math.Pow(float64(windSpeed),3))
+	//TODO: Check fixed logic
 	if strings.Contains(strings.ToLower(metarEx.MetarExResult.Metar[0].CloudFriendly), "snow") {
 		fee += 7.5
 	}
@@ -172,7 +174,7 @@ func (a AeroAPI) CalculateFee(f *FlightInfo, ticketPrice, cancelRate float32) (f
 	return fee, nil
 }
 
-func (a AeroAPI) Calculate(flightNumber string, flightDate int64, ticketPrice float32) (float32, error) {
+func (a AeroAPI) CalculateCancellation(flightNumber string, flightDate int64, ticketPrice float32) (float32, error) {
 	flightInfo, err := a.GetFlightInfoEx(flightNumber, flightDate)
 	if err != nil {
 		log.Errorf("Unable to get flight info: %v", err)
@@ -185,5 +187,53 @@ func (a AeroAPI) Calculate(flightNumber string, flightDate int64, ticketPrice fl
 		return 0, err
 	}
 
-	return a.CalculateFee(flightInfo, ticketPrice, cancelRate)
+	return a.CalculateCancellationFee(flightInfo, ticketPrice, cancelRate)
 }
+
+func (a AeroAPI) CalculateDelayRate(f *FlightInfo) (float32, error) {
+	var rate float32
+	metarEx, err := a.GetMetarExInfo(f)
+	if err != nil{
+		log.Errorf("Unable to get is it snowing: %v", err)
+		return 0, err
+	}
+	//TODO : Add Holiday rate logic
+	if metarEx.MetarExResult.Metar[0].CloudFriendly == "Snowing"{
+		rate += 75 * 0.05
+	}
+	if metarEx.MetarExResult.Metar[0].WindSpeed > 0{
+		//TODO: Add wind speed rate logic
+	}
+	//TODO: Add Airline Delay logic
+
+	//TODO : Add Airport Delay logic
+
+	//TODO : Add Scheduled Dep Time logic
+
+	return rate, nil
+
+}
+
+func (a AeroAPI) CalculateDelayFee(f *FlightInfo, ticketPrice, delayRate float32) (float32, error) {
+	var fee float32
+	// TODO: Ask if ticket premium same?
+	// TODO: Add Calculation Fee Logic
+	return fee, nil
+}
+
+func (a AeroAPI) CalculateDelay(flightNumber string, flightDate int64, ticketPrice float32) (float32, error) {
+	flightInfo, err := a.GetFlightInfoEx(flightNumber, flightDate)
+	if err != nil {
+		log.Errorf("Unable to get flight info: %v", err)
+		return 0, err
+	}
+
+	delayRate, err := a.CalculateDelayRate(flightInfo)
+	if err != nil {
+		log.Errorf("Unable to get cancellation rate: %v", err)
+		return 0, err
+	}
+
+	return a.CalculateDelayFee(flightInfo, ticketPrice, delayRate)
+}
+
