@@ -110,14 +110,22 @@ func (a AeroAPI) NewDeleteAlertURL(id int) string {
 	return fmt.Sprintf("%v", u)
 }
 
-func (a AeroAPI) NewAirlineDelayRateURL() {
 
-}
 
-func (a AeroAPI) NewAirportDelayRateURL() {
+func (a AeroAPI) NewAirportDelaysURL(airport string) string{
+	data := url.Values{}
 
+	data.Set("airport", airport)
+	u, _ := url.ParseRequestURI(a.URL + AirportDelays)
+	u.RawQuery = data.Encode()
+
+	return fmt.Sprintf("%v", u)
 }
 
 func (a AeroAPI) NewScheduledDepTimeDelayURL() {
+
+}
+
+func (a AeroAPI) NewAirlineDelayRateURL() {
 
 }

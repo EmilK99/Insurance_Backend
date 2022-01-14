@@ -1,6 +1,6 @@
 loglevel = "debug"
 listen = "127.0.0.1"
-db_url = "db_url"
+db_url = "postgres://vyacheslav:1234@localhost:5432/flightapp_backend?sslmode=disable"
 aeroapi_username = "<your_username>"
 aeroapi_apikey = "<your_api_key>"
 client_id = "<paypal_client_id>"

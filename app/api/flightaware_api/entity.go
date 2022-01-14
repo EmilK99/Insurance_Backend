@@ -10,6 +10,7 @@ const (
 	SetAlert              = "SetAlert"
 	GetAlert              = "GetAlert"
 	DeleteAlert           = "DeleteAlert"
+	AirportDelays         = "AirportDelays"
 )
 
 type CalculateFeeRequest struct {
@@ -154,4 +155,23 @@ type FlightInfo struct {
 	OriginCity           string `json:"originCity"`
 	DestinationName      string `json:"destinationName"`
 	DestinationCity      string `json:"destinationCity"`
+}
+
+// TODO: show new struct
+type AirportDelaysStruct struct {
+	AirportDelaysResult struct {
+		delays []struct {
+			Airport     string `json:"airport"`
+			Category    string `json:"category"`
+			Color       string `json:"color"`
+			Delay_secs  int    `json:"delay_secs"`
+			Reasons_all []struct {
+				Category   string `json:"category"`
+				Color      string `json:"color"`
+				Delay_secs int    `json:"delay_secs"`
+				Reasons    string `json:"reasons"`
+			} `json:"reasons_all"`
+		} `json:"delays"`
+		Num_dealys int `json:"num_dealys"`
+	}`json:"airport_delays_result"`
 }
