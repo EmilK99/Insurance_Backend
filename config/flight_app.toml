@@ -1,6 +1,6 @@
 loglevel = "debug"
 listen = "127.0.0.1"
-db_url = "db url"
+db_url = "db_url"
 aeroapi_username = "<your_username>"
 aeroapi_apikey = "<your_api_key>"
 client_id = "<paypal_client_id>"

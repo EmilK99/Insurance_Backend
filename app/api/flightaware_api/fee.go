@@ -165,8 +165,8 @@ func (a AeroAPI) CalculateCancellationFee(f *FlightInfo, ticketPrice, cancelRate
 
 	windSpeed := metarEx.MetarExResult.Metar[0].WindSpeed
 
-	fee += 0.001 * float32(math.Pow(float64(windSpeed),3))
-	//TODO: Check fixed logic
+	fee += 0.0001 * float32(math.Pow(float64(windSpeed), 3))
+	//TODO: Show final result
 	if strings.Contains(strings.ToLower(metarEx.MetarExResult.Metar[0].CloudFriendly), "snow") {
 		fee += 7.5
 	}
@@ -189,7 +189,7 @@ func (a AeroAPI) CalculateCancellation(flightNumber string, flightDate int64, ti
 
 	return a.CalculateCancellationFee(flightInfo, ticketPrice, cancelRate)
 }
-
+////////////////////////////////////////////////////////////////////////////////////////
 func (a AeroAPI) CalculateDelayRate(f *FlightInfo) (float32, error) {
 	var rate float32
 	metarEx, err := a.GetMetarExInfo(f)
@@ -201,8 +201,8 @@ func (a AeroAPI) CalculateDelayRate(f *FlightInfo) (float32, error) {
 	if metarEx.MetarExResult.Metar[0].CloudFriendly == "Snowing"{
 		rate += 75 * 0.05
 	}
-	if metarEx.MetarExResult.Metar[0].WindSpeed > 0{
-		//TODO: Add wind speed rate logic
+	if metarEx.MetarExResult.Metar[0].WindSpeed >= 3{
+		rate += float32(metarEx.MetarExResult.Metar[0].WindSpeed)
 	}
 	//TODO: Add Airline Delay logic
 
