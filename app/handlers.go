@@ -233,7 +233,13 @@ func (s *server) CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else if req.Delay {
-		// TODO: Add Delay Premium logic
+		premium, err = s.aeroApi.CalculateDelay(req.FlightNumber, req.FlightDate, req.TicketPrice)
+		if err != nil {
+			log.Errorf("Unable to calculate fee: %v", err)
+			w.WriteHeader(500)
+			_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+			return
+		}
 	} else {
 		log.Errorf("Unable to calculate fee: %v", err)
 		w.WriteHeader(422)

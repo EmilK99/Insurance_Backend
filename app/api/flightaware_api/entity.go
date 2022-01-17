@@ -15,7 +15,9 @@ const (
 	AirportInfo = "AirportInfo"
 )
 
-type WS map[int]float32
+type WS map[int]float64
+
+
 
 type CalculateFeeRequest struct {
 	FlightNumber string  `json:"flight_number"`

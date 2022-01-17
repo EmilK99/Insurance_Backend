@@ -93,6 +93,7 @@ func (a AeroAPI) GetFlightInfoEx(flightNumber string, flightDate int64) (*Flight
 		}
 	}
 
+
 	if flight.Ident == "" {
 		return nil, errors.New(fmt.Sprintf("Info about this flight doesn't exist: %s", flightNumber))
 	}
@@ -287,7 +288,7 @@ func(a AeroAPI) CalculateFeeByRate(ticketPrice, delayRate float32) (float32, err
 		fee := ticketPrice * 0.075
 		return fee, nil
 	case delayRate > 70 && delayRate <= 80:
-		fee := ticketPrice * 0.09 //TODO: miss task description
+		fee := ticketPrice * 0.09
 		return fee, nil
 	case delayRate > 80 && delayRate <= 90:
 		fee := ticketPrice * 0.1
@@ -314,6 +315,7 @@ func (a AeroAPI) CalculateDelayRate(f *FlightInfo) (float32, error) {
 	if strings.Contains(strings.ToLower(metarEx.MetarExResult.Metar[0].CloudFriendly), "snow"){
 		rate += 75 * 0.05
 	}
+
 	if metarEx.MetarExResult.Metar[0].WindSpeed >= 3 {
 		var wsRate float32
 		for k, v := range mapWindSpeed{
@@ -323,8 +325,8 @@ func (a AeroAPI) CalculateDelayRate(f *FlightInfo) (float32, error) {
 			}
 		}
 		rate += wsRate*0.05
-
 	}
+
 
 	alRate, err := a.AirlineDelaysRate(f)
 	if err != nil{
@@ -345,6 +347,7 @@ func (a AeroAPI) CalculateDelayRate(f *FlightInfo) (float32, error) {
 		log.Errorf("Can't calculate schedual dep rate rate: %v", err)
 		return 0, err
 	}
+
 	rate += sdtRate
 
 
@@ -364,9 +367,9 @@ func (a AeroAPI) AirportDelaysRate(f *FlightInfo) (float32, error){
 
 	numDep := apd.FlightCancellationStatisticsResult.Matching[0].Total
 
-	airportDelayRate := float32(numDelays/numDep)
+	airportDelayRate := float32(numDelays)/float32(numDep)
 
-	score := airportDelayRate * 3
+	score := airportDelayRate * 3 * 100
 
 	return score * 0.35, nil
 }
@@ -381,11 +384,11 @@ func (a AeroAPI) AirlineDelaysRate(f *FlightInfo) (float32, error){
 
 	numDep := apd.FlightCancellationStatisticsResult.Matching[0].Total
 
-	airportDelayRate := float32(numDelays/numDep)
+	airportDelayRate := float32(numDelays)/float32(numDep)
 
-	score := airportDelayRate * 3
+	score := airportDelayRate * 3 * 100
 
-	return score * 0.40, nil
+	return score * 0.4, nil
 }
 
 func (a AeroAPI) GetCancellationAirlineInfo(f *FlightInfo) (*FlightCancellationStatisticsResponse, error) {
@@ -426,7 +429,7 @@ func (a AeroAPI) GetCancellationAirportInfo(f *FlightInfo) (*FlightCancellationS
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(aeroApiURLStr)
+
 	return flightCancelRate, nil
 }
 
@@ -442,9 +445,10 @@ func (a AeroAPI) ScheduleDepTimeAndHolidayRate(f *FlightInfo) (float32, error){
 		return 0, err
 	}
 
-	tz, err := time.LoadLocation(apInfo.AirportInfoResult.Timezone)
+	tzf := strings.TrimPrefix(apInfo.AirportInfoResult.Timezone,":")
+	tz, err := time.LoadLocation(tzf)
 	if err != nil{
-		log.Errorf("Uncknown location: %v", err)
+		log.Errorf("Unknown location: %v", err)
 		return 0, err
 	}
 	depTime = depTime.In(tz)
@@ -460,7 +464,6 @@ func (a AeroAPI) ScheduleDepTimeAndHolidayRate(f *FlightInfo) (float32, error){
 	} else if depTime.Month() == 3 && depTime.Day() >= 10 &&depTime.Day() <= 22 {
 		score += 58.3
 	}
-
 
 	switch {
 
@@ -493,7 +496,7 @@ func (a AeroAPI) ScheduleDepTimeAndHolidayRate(f *FlightInfo) (float32, error){
 func (a AeroAPI) GetAirportInfo(f *FlightInfo) (*AirportInfoResp, error) {
 
 	aeroApiURLStr := a.NewAirportInfoURL(f.Origin)
-	fmt.Println(aeroApiURLStr)
+
 	re, _ := http.NewRequest("POST", aeroApiURLStr, nil)
 
 	client := &http.Client{}
