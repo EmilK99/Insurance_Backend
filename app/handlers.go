@@ -457,3 +457,4 @@ func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 }
+

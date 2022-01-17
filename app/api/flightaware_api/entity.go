@@ -1,17 +1,21 @@
 package flightaware_api
 
 const (
-	FlightInformation     = "FlightInfo"
-	GetFlightID           = "GetFlightID"
-	FlightInfoEx          = "FlightInfoEx"
-	MetarEx               = "MetarEx"
-	CancellationStat      = "FlightCancellationStatistics"
-	RegisterAlertEndpoint = "RegisterAlertEndpoint"
-	SetAlert              = "SetAlert"
-	GetAlert              = "GetAlert"
-	DeleteAlert           = "DeleteAlert"
-	AirportDelays         = "AirportDelays"
+	FlightInformation      = "FlightInfo"
+	GetFlightID            = "GetFlightID"
+	FlightInfoEx           = "FlightInfoEx"
+	MetarEx                = "MetarEx"
+	CancellationStat       = "FlightCancellationStatistics"
+	RegisterAlertEndpoint  = "RegisterAlertEndpoint"
+	SetAlert               = "SetAlert"
+	GetAlert               = "GetAlert"
+	DeleteAlert            = "DeleteAlert"
+	AirportDelays          = "AirportDelays"
+	CountAirportOperations = "CountAirportOperations"
+	AirportInfo = "AirportInfo"
 )
+
+type WS map[int]float32
 
 type CalculateFeeRequest struct {
 	FlightNumber string  `json:"flight_number"`
@@ -157,21 +161,19 @@ type FlightInfo struct {
 	DestinationCity      string `json:"destinationCity"`
 }
 
-// TODO: show new struct
-type AirportDelaysStruct struct {
-	AirportDelaysResult struct {
-		delays []struct {
-			Airport     string `json:"airport"`
-			Category    string `json:"category"`
-			Color       string `json:"color"`
-			Delay_secs  int    `json:"delay_secs"`
-			Reasons_all []struct {
-				Category   string `json:"category"`
-				Color      string `json:"color"`
-				Delay_secs int    `json:"delay_secs"`
-				Reasons    string `json:"reasons"`
-			} `json:"reasons_all"`
-		} `json:"delays"`
-		Num_dealys int `json:"num_dealys"`
-	}`json:"airport_delays_result"`
+
+type AirportInfoReq struct {
+	AirportCode string `json:"airport_code"`
 }
+
+type AirportInfoResp struct {
+	AirportInfoResult struct {
+		Name      string  `json:"name"`
+		Location  string  `json:"location"`
+		Longitude float64 `json:"longitude"`
+		Latitude  float64 `json:"latitude"`
+		Timezone  string  `json:"timezone"`
+	} `json:"AirportInfoResult"`
+}
+
+

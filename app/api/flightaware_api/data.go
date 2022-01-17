@@ -49,7 +49,7 @@ func (a AeroAPI) NewGetFlightIDURL(ident string, departureTime int) string {
 	return fmt.Sprintf("%v", u)
 }
 
-func (a AeroAPI) NewCancellationRateURL(ident string) string {
+func (a AeroAPI) NewCancellationRateAirlineURL(ident string) string {
 	re := regexp.MustCompile("[A-Z]+")
 
 	data := url.Values{}
@@ -57,7 +57,21 @@ func (a AeroAPI) NewCancellationRateURL(ident string) string {
 	data.Set("type_matching", "airline")
 	data.Set("ident_filter", re.FindAllString(ident, -1)[0])
 
-	u, _ := url.ParseRequestURI(a.URL + CancellationStat)
+	u, _ := url.ParseRequestURI(a.URLc + CancellationStat)
+	u.RawQuery = data.Encode()
+
+	return fmt.Sprintf("%v", u)
+}
+
+func (a AeroAPI) NewCancellationRateAirportURL(ident string) string {
+
+
+	data := url.Values{}
+	data.Set("time_period", "today")
+	data.Set("type_matching", "origin")
+	data.Set("ident_filter", ident)
+
+	u, _ := url.ParseRequestURI(a.URLc + CancellationStat)
 	u.RawQuery = data.Encode()
 
 	return fmt.Sprintf("%v", u)
@@ -116,16 +130,33 @@ func (a AeroAPI) NewAirportDelaysURL(airport string) string{
 	data := url.Values{}
 
 	data.Set("airport", airport)
-	u, _ := url.ParseRequestURI(a.URL + AirportDelays)
+
+	u, _ := url.ParseRequestURI(a.URLc + AirportDelays)
+	u.RawQuery = data.Encode()
+
+	return fmt.Sprintf("%v", u)
+
+
+}
+
+func (a AeroAPI) NewCountAirportOperationsURL(airport string) string{
+	data := url.Values{}
+
+	data.Set("airport", airport)
+
+	u, _ := url.ParseRequestURI(a.URL + CountAirportOperations)
 	u.RawQuery = data.Encode()
 
 	return fmt.Sprintf("%v", u)
 }
 
-func (a AeroAPI) NewScheduledDepTimeDelayURL() {
+func (a AeroAPI) NewAirportInfoURL(airport string) string {
+	data := url.Values{}
 
-}
+	data.Set("airportCode", airport)
 
-func (a AeroAPI) NewAirlineDelayRateURL() {
+	u, _ := url.ParseRequestURI(a.URL + AirportInfo)
+	u.RawQuery = data.Encode()
 
+	return fmt.Sprintf("%v", u)
 }

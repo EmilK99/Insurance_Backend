@@ -26,8 +26,8 @@ func newServer(store *store2.Store, ctx context.Context, solClient *sc.Client, p
 	var aeroAPI flightaware_api.AeroAPI
 	aeroAPI.Username = viper.GetString("aeroapi_username")
 	aeroAPI.APIKey = viper.GetString("aeroapi_apikey")
-	aeroAPI.URL = "https://" + aeroAPI.Username + ":" + aeroAPI.APIKey + "@flightxml.flightaware.com/json/FlightXML2/"
-
+	aeroAPI.URL = "http://" + aeroAPI.Username + ":" + aeroAPI.APIKey + "@flightxml.flightaware.com/json/FlightXML2/"
+	aeroAPI.URLc = "http://" + aeroAPI.Username + ":" + aeroAPI.APIKey + "@flightxml.flightaware.com/json/FlightXML2c/"
 	return &server{ctx: ctx, store: store, solClient: solClient, client: &payments.Client{}, port: port, aeroApi: aeroAPI}
 }
 
@@ -66,6 +66,6 @@ func (s *server) configureRouter() {
 
 	//withdraw successful contract
 	router.HandleFunc("/flightaware_api/withdraw", s.HandleWithdrawPremium).Methods("POST")
-
+	
 	s.router = cors.AllowAll().Handler(router)
 }
