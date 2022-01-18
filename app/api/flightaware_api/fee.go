@@ -314,6 +314,11 @@ func (a AeroAPI) CalculateDelayRate(f *FlightInfo) (float32, error) {
 		rate += 75 * 0.05
 	}
 
+	if metarEx.MetarExResult.Metar[0].WindSpeed >= 40{
+		log.Errorf("Too windy can't calculate wind speed rate")
+		return 0, errors.New("it's too windy today, can't calculate wind speed rate")
+	}
+
 	if metarEx.MetarExResult.Metar[0].WindSpeed >= 3 {
 		var wsRate float32
 		for k, v := range mapWindSpeed {
@@ -465,7 +470,7 @@ func (a AeroAPI) ScheduleDepTimeAndHolidayRate(f *FlightInfo) (float32, error) {
 	} else if depTime.Month() == 3 && depTime.Day() >= 10 && depTime.Day() <= 22 {
 		score += 58.3
 	}
-	
+
 	switch {
 
 	case depTime.Hour() >= 7 && depTime.Hour() < 9:
