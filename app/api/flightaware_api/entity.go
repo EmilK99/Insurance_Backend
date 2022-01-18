@@ -10,8 +10,6 @@ const (
 	SetAlert               = "SetAlert"
 	GetAlert               = "GetAlert"
 	DeleteAlert            = "DeleteAlert"
-	AirportDelays          = "AirportDelays"
-	CountAirportOperations = "CountAirportOperations"
 	AirportInfo = "AirportInfo"
 )
 

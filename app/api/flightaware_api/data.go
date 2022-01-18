@@ -125,31 +125,6 @@ func (a AeroAPI) NewDeleteAlertURL(id int) string {
 }
 
 
-
-func (a AeroAPI) NewAirportDelaysURL(airport string) string{
-	data := url.Values{}
-
-	data.Set("airport", airport)
-
-	u, _ := url.ParseRequestURI(a.URLc + AirportDelays)
-	u.RawQuery = data.Encode()
-
-	return fmt.Sprintf("%v", u)
-
-
-}
-
-func (a AeroAPI) NewCountAirportOperationsURL(airport string) string{
-	data := url.Values{}
-
-	data.Set("airport", airport)
-
-	u, _ := url.ParseRequestURI(a.URL + CountAirportOperations)
-	u.RawQuery = data.Encode()
-
-	return fmt.Sprintf("%v", u)
-}
-
 func (a AeroAPI) NewAirportInfoURL(airport string) string {
 	data := url.Values{}
 
