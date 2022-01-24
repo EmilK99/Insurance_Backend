@@ -36,8 +36,8 @@ func (s *Store) CreateContract(ctx context.Context, c *Contract) error {
 		return nil
 	}
 	err = s.Conn.QueryRow(ctx,
-		"INSERT INTO contracts (user_id, flight_number, flight_date, date, ticket_price, fee) VALUES ($1, $2, $3, $4, $5, $6) RETURNING ID",
-		c.UserID, c.FlightNumber, c.FlightDate, c.Date, c.TicketPrice, c.Fee,
+		"INSERT INTO contracts (user_id, type, flight_number, flight_date, date, ticket_price, fee) VALUES ($1, $2, $3, $4, $5, $6) RETURNING ID",
+		c.UserID, c.Type, c.FlightNumber, c.FlightDate, c.Date, c.TicketPrice, c.Fee,
 	).Scan(&c.ID)
 	if err != nil {
 		log.Errorf("Unable to INSERT: %v\n", err)
@@ -47,7 +47,6 @@ func (s *Store) CreateContract(ctx context.Context, c *Contract) error {
 }
 
 func (s *Store) VerifyPayment(ctx context.Context, contractId int, paySystem, customerID string) error {
-
 	_, err := s.Conn.Exec(ctx,
 		"UPDATE contracts SET payment=true, status='waiting' WHERE id=$1",
 		contractId)
@@ -55,7 +54,6 @@ func (s *Store) VerifyPayment(ctx context.Context, contractId int, paySystem, cu
 		log.Errorf("Unable to UPDATE: %v\n", err)
 		return err
 	}
-
 	_, err = s.Conn.Exec(ctx,
 		"INSERT INTO payments (contract_id, pay_system, customer_id) VALUES ($1, $2, $3)", contractId, paySystem, customerID)
 	if err != nil {

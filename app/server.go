@@ -18,8 +18,8 @@ type server struct {
 	store     *store2.Store
 	client    *payments.Client
 	solClient *sc.Client
-	port    string
-	aeroApi flightaware_api.AeroAPI
+	port      string
+	aeroApi   flightaware_api.AeroAPI
 }
 
 func newServer(store *store2.Store, ctx context.Context, solClient *sc.Client, port string) *server {
@@ -28,7 +28,12 @@ func newServer(store *store2.Store, ctx context.Context, solClient *sc.Client, p
 	aeroAPI.APIKey = viper.GetString("aeroapi_apikey")
 	aeroAPI.URL = "http://" + aeroAPI.Username + ":" + aeroAPI.APIKey + "@flightxml.flightaware.com/json/FlightXML2/"
 	aeroAPI.URLc = "http://" + aeroAPI.Username + ":" + aeroAPI.APIKey + "@flightxml.flightaware.com/json/FlightXML2c/"
-	return &server{ctx: ctx, store: store, solClient: solClient, client: &payments.Client{}, port: port, aeroApi: aeroAPI}
+	return &server{ctx: ctx,
+		store:     store,
+		solClient: solClient,
+		client:    &payments.Client{},
+		port:      port,
+		aeroApi:   aeroAPI}
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
