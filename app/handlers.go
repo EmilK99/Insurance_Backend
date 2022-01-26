@@ -277,12 +277,13 @@ func (s *server) HandleAlertWebhook(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(400), "message": err.Error(), "status": "Error"})
 		return
 	}
-
-	err = s.store.UpdateContractsByAlert(s.ctx, alert.Flight.Ident, alert.Eventcode, alert.Flight.FiledDeparturetime)
-	if err != nil {
-		w.WriteHeader(500)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
-		return
+	if alert.Eventcode == "cancelled" {
+		err = s.store.UpdateContractsByAlert(s.ctx, alert.Flight.Ident, alert.Eventcode, alert.Flight.FiledDeparturetime)
+		if err != nil {
+			w.WriteHeader(500)
+			_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+			return
+		}
 	}
 
 	err = s.aeroApi.DeleteAlerts(alert.AlertId)

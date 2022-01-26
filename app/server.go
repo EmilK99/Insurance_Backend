@@ -43,34 +43,34 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *server) configureRouter() {
 	router := mux.NewRouter()
 	//fee calculation
-	router.HandleFunc("/flightaware_api/flights", s.HandleGetFlights).Methods("POST")
+	router.HandleFunc("/api/flights", s.HandleGetFlights).Methods("POST")
 
 	//fee calculation
-	router.HandleFunc("/flightaware_api/calculate", s.CalculateFeeHandler).Methods("POST")
+	router.HandleFunc("/api/calculate", s.CalculateFeeHandler).Methods("POST")
 
 	//contract create
-	router.HandleFunc("/flightaware_api/contract/create", s.HandleCreateContract).Methods("POST")
+	router.HandleFunc("/api/contract/create", s.HandleCreateContract).Methods("POST")
 
 	//get contracts
-	router.HandleFunc("/flightaware_api/contracts", s.HandleGetContracts).Methods("POST")
+	router.HandleFunc("/api/contracts", s.HandleGetContracts).Methods("POST")
 
 	//get payout history
-	router.HandleFunc("/flightaware_api/payouts", s.HandleGetPayouts).Methods("POST")
+	router.HandleFunc("/api/payouts", s.HandleGetPayouts).Methods("POST")
 
 	//alerts webhook
-	router.HandleFunc("/flightaware_api/alerts", s.HandleAlertWebhook).Methods("GET", "POST")
+	router.HandleFunc("/api/alerts", s.HandleAlertWebhook).Methods("GET", "POST")
 
 	//register alerts
-	router.HandleFunc("/flightaware_api/alerts/register", s.HandleRegisterAlertsEndpoint).Methods("GET")
+	router.HandleFunc("/api/alerts/register", s.HandleRegisterAlertsEndpoint).Methods("GET")
 
 	//paypal success
-	router.HandleFunc("/flightaware_api/success", s.HandlerSuccess).Methods("GET")
+	router.HandleFunc("/api/success", s.HandlerSuccess).Methods("GET")
 
 	//paypal cancel
-	router.HandleFunc("/flightaware_api/cancel", s.HandlerCancel).Methods("GET")
+	router.HandleFunc("/api/cancel", s.HandlerCancel).Methods("GET")
 
 	//withdraw successful contract
-	router.HandleFunc("/flightaware_api/withdraw", s.HandleWithdrawPremium).Methods("POST")
+	router.HandleFunc("/api/withdraw", s.HandleWithdrawPremium).Methods("POST")
 
 	s.router = cors.AllowAll().Handler(router)
 }
