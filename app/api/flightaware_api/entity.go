@@ -1,16 +1,21 @@
-package api
+package flightaware_api
 
 const (
-	FlightInformation     = "FlightInfo"
-	GetFlightID           = "GetFlightID"
-	FlightInfoEx          = "FlightInfoEx"
-	MetarEx               = "MetarEx"
-	CancellationStat      = "FlightCancellationStatistics"
-	RegisterAlertEndpoint = "RegisterAlertEndpoint"
-	SetAlert              = "SetAlert"
-	GetAlert              = "GetAlert"
-	DeleteAlert           = "DeleteAlert"
+	FlightInformation      = "FlightInfo"
+	GetFlightID            = "GetFlightID"
+	FlightInfoEx           = "FlightInfoEx"
+	MetarEx                = "MetarEx"
+	CancellationStat       = "FlightCancellationStatistics"
+	RegisterAlertEndpoint  = "RegisterAlertEndpoint"
+	SetAlert               = "SetAlert"
+	GetAlert               = "GetAlert"
+	DeleteAlert            = "DeleteAlert"
+	AirportInfo = "AirportInfo"
 )
+
+type WS map[int]float64
+
+
 
 type CalculateFeeRequest struct {
 	FlightNumber string  `json:"flight_number"`
@@ -155,3 +160,20 @@ type FlightInfo struct {
 	DestinationName      string `json:"destinationName"`
 	DestinationCity      string `json:"destinationCity"`
 }
+
+
+type AirportInfoReq struct {
+	AirportCode string `json:"airport_code"`
+}
+
+type AirportInfoResp struct {
+	AirportInfoResult struct {
+		Name      string  `json:"name"`
+		Location  string  `json:"location"`
+		Longitude float64 `json:"longitude"`
+		Latitude  float64 `json:"latitude"`
+		Timezone  string  `json:"timezone"`
+	} `json:"AirportInfoResult"`
+}
+
+

@@ -4,6 +4,7 @@ import "time"
 
 type Contract struct {
 	ID           int       `json:"id"`
+	Type         string    `json:"type"`
 	UserID       string    `json:"user_id"`
 	FlightNumber string    `json:"flight_number"`
 	FlightDate   int64     `json:"flight_date"`
@@ -14,9 +15,10 @@ type Contract struct {
 	Status       string    `json:"status"`
 }
 
-func NewContract(userID, flightNumber string, flightDate int64, ticketPrice, fee float32) Contract {
+func NewContract(userID, contractType, flightNumber string, flightDate int64, ticketPrice, fee float32) Contract {
 	return Contract{UserID: userID,
 		FlightNumber: flightNumber,
+		Type:         contractType,
 		FlightDate:   flightDate,
 		Date:         time.Now(),
 		TicketPrice:  ticketPrice,

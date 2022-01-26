@@ -18,7 +18,7 @@ definitions:
         type: number
         x-go-name: TicketPrice
     type: object
-    x-go-package: flight_app/app/api
+    x-go-package: flight_app/app/flightaware_api
   CalculateFeeResponse:
     properties:
       fee:
@@ -26,7 +26,7 @@ definitions:
         type: number
         x-go-name: Fee
     type: object
-    x-go-package: flight_app/app/api
+    x-go-package: flight_app/app/flightaware_api
   ContractsInfo:
     properties:
       flight_number:

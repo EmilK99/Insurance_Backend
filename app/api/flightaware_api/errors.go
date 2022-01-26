@@ -1,4 +1,4 @@
-package api
+package flightaware_api
 
 import (
 	"errors"
