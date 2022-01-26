@@ -1,5 +1,5 @@
 alter table contracts
-    add type varchar not null;
+    add type varchar default 'cancel' not null;
 
 ---- create above / drop below ----
 
