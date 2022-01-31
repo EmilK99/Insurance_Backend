@@ -278,14 +278,14 @@ func (s *server) HandleAlertWebhook(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(400), "message": err.Error(), "status": "Error"})
 		return
 	}
-<<<<<<< HEAD
+
 	//TODO: add check delay or cancelled
 	err = s.store.UpdateContractsByAlert(s.ctx, alert.Flight.Ident, alert.Eventcode, alert.Flight.FiledDeparturetime)
 	if err != nil {
 		w.WriteHeader(500)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
 		return
-=======
+	}
 	if alert.Eventcode == "cancelled" {
 		err = s.store.UpdateContractsByAlert(s.ctx, alert.Flight.Ident, alert.Eventcode, alert.Flight.FiledDeparturetime)
 		if err != nil {
@@ -293,7 +293,7 @@ func (s *server) HandleAlertWebhook(w http.ResponseWriter, r *http.Request) {
 			_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
 			return
 		}
->>>>>>> c498ba0cc1dcd36cd8d29920fc945baf710dda0f
+
 	}
 
 	err = s.aeroApi.DeleteAlerts(alert.AlertId)
@@ -484,7 +484,6 @@ func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 }
-<<<<<<< HEAD
 
 func (s *server) Test(w http.ResponseWriter, r *http.Request){
 
@@ -519,5 +518,3 @@ func (s *server) Test(w http.ResponseWriter, r *http.Request){
 	}
 
 }
-=======
->>>>>>> c498ba0cc1dcd36cd8d29920fc945baf710dda0f
