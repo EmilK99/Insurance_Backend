@@ -6,6 +6,7 @@ import (
 	flightaware_api2 "flight_app/app/api/flightaware_api"
 	"flight_app/app/store"
 	"flight_app/payments"
+	"fmt"
 	"github.com/gogo/protobuf/sortkeys"
 	"github.com/plutov/paypal/v4"
 	log "github.com/sirupsen/logrus"
@@ -267,7 +268,7 @@ func (s *server) HandleAlertWebhook(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(400), "message": err.Error(), "status": "Error"})
 		return
 	}
-
+	//TODO: add check delay or cancelled
 	err = s.store.UpdateContractsByAlert(s.ctx, alert.Flight.Ident, alert.Eventcode, alert.Flight.FiledDeparturetime)
 	if err != nil {
 		w.WriteHeader(500)
@@ -464,3 +465,36 @@ func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *server) Test(w http.ResponseWriter, r *http.Request){
+
+
+
+
+
+
+
+
+	// *** Test Airport Info ***
+	var req flightaware_api2.AirportInfoReq
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil{
+		log.Errorf("Can't decode request: %v", err)
+		return
+	}
+
+	res, err := s.aeroApi.GetFlightInfoEx(req.AirportCode, 1642525800)
+	if err != nil{
+		fmt.Println(err)
+		return
+	}
+
+	head := w.Header()
+	head.Add("Content-Type","application/json; charset=UTF-8")
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		log.Errorf("Unable to encode json: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+
+}

@@ -67,5 +67,7 @@ func (s *server) configureRouter() {
 	//withdraw successful contract
 	router.HandleFunc("/flightaware_api/withdraw", s.HandleWithdrawPremium).Methods("POST")
 
+	router.HandleFunc("/test", s.Test).Methods("GET")
+
 	s.router = cors.AllowAll().Handler(router)
 }
