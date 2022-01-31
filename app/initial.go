@@ -81,12 +81,12 @@ func Run(configPath string, skipMigration bool) {
 	solClient, _ := sc.NewClient(common.PublicKeyFromString(programID), privateKey, rpc.DevnetRPCEndpoint)
 
 	srv := newServer(store, ctx, solClient, port)
-	//srv.client.ClientID = viper.GetString("client_id")
-	//srv.client.SecretID = viper.GetString("secret_id")
-	//err = srv.client.Initialize(ctx)
-	//if err != nil {
-	//	log.Fatalf("Unable to initialize paypal client: %v", err)
-	//}
+	srv.client.ClientID = viper.GetString("client_id")
+	srv.client.SecretID = viper.GetString("secret_id")
+	err = srv.client.Initialize(ctx)
+	if err != nil {
+		log.Fatalf("Unable to initialize paypal client: %v", err)
+	}
 
 	srv.configureRouter()
 

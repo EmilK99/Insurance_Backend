@@ -64,8 +64,6 @@ func (a AeroAPI) NewCancellationRateAirlineURL(ident string) string {
 }
 
 func (a AeroAPI) NewCancellationRateAirportURL(ident string) string {
-
-
 	data := url.Values{}
 	data.Set("time_period", "today")
 	data.Set("type_matching", "origin")
@@ -123,7 +121,6 @@ func (a AeroAPI) NewDeleteAlertURL(id int) string {
 
 	return fmt.Sprintf("%v", u)
 }
-
 
 func (a AeroAPI) NewAirportInfoURL(airport string) string {
 	data := url.Values{}

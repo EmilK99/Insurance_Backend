@@ -64,6 +64,7 @@ func (c *Client) CreatePayout(ctx context.Context, payouts []*store.PayoutsInfo)
 
 func (c *Client) CreateOrder(ctx context.Context, contract store.Contract, returnURL, cancelURL string) (string, error) {
 	value := fmt.Sprintf("%.2f", contract.Fee)
+
 	order, err := c.Client.CreateOrder(ctx,
 		paypal.OrderIntentCapture,
 		[]paypal.PurchaseUnitRequest{

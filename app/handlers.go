@@ -128,8 +128,11 @@ func (s *server) HandleGetPayouts(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 
-	var req store.CreateContractRequest
-	var premium float32
+	var (
+		req          store.CreateContractRequest
+		premium      float32
+		contractType string
+	)
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil { // bad request
@@ -146,7 +149,6 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	if req.Cancellation {
 		premium, err = s.aeroApi.CalculateCancellation(req.FlightNumber, req.FlightDate, req.TicketPrice)
 		if err != nil {
@@ -155,15 +157,23 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 			_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
 			return
 		}
+		contractType = "cancel"
 	} else if req.Delay {
-		//TODO: Add Delay premium logic
+		premium, err = s.aeroApi.CalculateDelay(req.FlightNumber, req.FlightDate, req.TicketPrice)
+		if err != nil {
+			log.Errorf("Unable to calculate fee: %v", err)
+			w.WriteHeader(500)
+			_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+			return
+		}
+		contractType = "delay"
 	} else {
 		log.Errorf("Unable to calculate fee: %v", err)
 		w.WriteHeader(422)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(422), "message": "Choose cancellation or delay", "status": "Error"})
 		return
 	}
-	contr := store.NewContract(req.UserID, req.FlightNumber, flightInfo.FiledDeparturetime,
+	contr := store.NewContract(req.UserID, contractType, req.FlightNumber, flightInfo.FiledDeparturetime,
 		req.TicketPrice, premium)
 
 	if time.Unix(contr.FlightDate, 0).Before(time.Now()) {
@@ -225,7 +235,7 @@ func (s *server) CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
- 	if req.Cancellation {
+	if req.Cancellation {
 		premium, err = s.aeroApi.CalculateCancellation(req.FlightNumber, req.FlightDate, req.TicketPrice)
 		if err != nil {
 			log.Errorf("Unable to calculate fee: %v", err)
@@ -268,12 +278,22 @@ func (s *server) HandleAlertWebhook(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(400), "message": err.Error(), "status": "Error"})
 		return
 	}
+<<<<<<< HEAD
 	//TODO: add check delay or cancelled
 	err = s.store.UpdateContractsByAlert(s.ctx, alert.Flight.Ident, alert.Eventcode, alert.Flight.FiledDeparturetime)
 	if err != nil {
 		w.WriteHeader(500)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
 		return
+=======
+	if alert.Eventcode == "cancelled" {
+		err = s.store.UpdateContractsByAlert(s.ctx, alert.Flight.Ident, alert.Eventcode, alert.Flight.FiledDeparturetime)
+		if err != nil {
+			w.WriteHeader(500)
+			_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+			return
+		}
+>>>>>>> c498ba0cc1dcd36cd8d29920fc945baf710dda0f
 	}
 
 	err = s.aeroApi.DeleteAlerts(alert.AlertId)
@@ -464,6 +484,7 @@ func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 }
+<<<<<<< HEAD
 
 func (s *server) Test(w http.ResponseWriter, r *http.Request){
 
@@ -498,3 +519,5 @@ func (s *server) Test(w http.ResponseWriter, r *http.Request){
 	}
 
 }
+=======
+>>>>>>> c498ba0cc1dcd36cd8d29920fc945baf710dda0f
