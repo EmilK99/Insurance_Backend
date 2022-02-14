@@ -14,7 +14,7 @@ func GetSuccessCancelURL(host string, tls bool) (string, string) {
 		url += "http://"
 	}
 	url += host
-	return url + "/flightaware_api/success", url + "/flightaware_api/cancel"
+	return url + "/api/success", url + "/api/cancel"
 }
 
 func (a AeroAPI) NewFlightInfoURL(ident string) string {
@@ -132,3 +132,4 @@ func (a AeroAPI) NewAirportInfoURL(airport string) string {
 
 	return fmt.Sprintf("%v", u)
 }
+

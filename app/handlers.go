@@ -139,6 +139,27 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(400), "message": err.Error(), "status": "Error"})
 		return
 	}
+//TODO
+	if req.TicketPrice > 1000 {
+		log.Errorf("The ticket is too expensive, suspicion of fraud")
+		w.WriteHeader(412)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(412), "message": "Invalid ticket price", "status": "Suspicion of fraud"})
+		return
+	}
+//TODO
+	checkContr, err := s.store.CheckCountContarcts(req.UserID)
+	if err != nil{
+		log.Errorf("Unable to count contracts")
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error()})
+		return
+	}
+	if !checkContr {
+		log.Errorf("Too many opened contracts, suspicion of fraud")
+		w.WriteHeader(412)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(412), "message": "Too many opened contracts", "status": "Suspicion of fraud"})
+		return
+	}
 
 	flightInfo, err := s.aeroApi.GetFlightInfoEx(req.FlightNumber, req.FlightDate)
 	if err != nil {
@@ -147,6 +168,30 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
 		return
 	}
+//TODO
+	if flightInfo.FiledDeparturetime - 3600 > time.Now().Unix(){
+		log.Errorf("Late attempt to create contract, suspicion of fraud")
+		w.WriteHeader(412)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(412), "message": "Late attempt to create contract", "status": "Suspicion of fraud"})
+		return
+	}
+//TODO
+
+	checkCap, err := s.store.CheckCountAircraft(flightInfo.Aircrafttype, req.FlightNumber,req.FlightDate)
+	if err != nil {
+		log.Errorf("Unable to check apircraft capacity: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	if !checkCap{
+		log.Errorf("Too many opened contracts on this flight, suspicion of fraud")
+		w.WriteHeader(412)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(412), "message": "Too many opened contracts on this flight", "status": "Suspicion of fraud"})
+		return
+	}
+
 
 	if req.Cancellation {
 		premium, err = s.aeroApi.CalculateCancellation(req.FlightNumber, req.FlightDate, req.TicketPrice)
@@ -231,6 +276,13 @@ func (s *server) CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 
 	if req.FlightDate == 0 {
 		w.WriteHeader(400)
+		return
+	}
+
+	if req.TicketPrice > 1000 {
+		log.Errorf("The ticket is too expensive, suspicion of fraud")
+		w.WriteHeader(412)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(412), "message": "Invalid ticket price", "status": "Suspicion of fraud"})
 		return
 	}
 
@@ -348,7 +400,32 @@ func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, err := s.client.Client.NewRequest(s.ctx, http.MethodPost, "https://flightaware_api.sandbox.paypal.com/v2/checkout/orders/"+token+"/capture", nil)
+	//TODO
+	_, err = s.store.Conn.Exec(s.ctx,
+		"INSERT INTO contracts(payer_id) VALUES ($1) WHERE id=$2",
+		res.Payer.PayerID, contractID)
+
+	check, err := s.store.CheckCountPaypal(res.Payer.PayerID)
+	if err != nil {
+		log.Errorf("Failed to get count contracts: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+	if !check {
+		_, err = s.store.Conn.Exec(s.ctx,
+			"DELETE FROM contracts WHERE id=$1",
+			contractID)
+		if err != nil {
+			log.Errorf("Unable to UPDATE: %v\n", err)
+			return
+		}
+
+		log.Errorf("Too many opened contracts for :%v", res.Payer.PayerID)
+		return
+	}
+
+	req, err := s.client.Client.NewRequest(s.ctx, http.MethodPost, "https://api.sandbox.paypal.com/v2/checkout/orders/"+token+"/capture", nil)
 	if err != nil {
 		log.Error(err)
 	}
@@ -474,3 +551,4 @@ func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 }
+

@@ -7,6 +7,86 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var aircraftCapacity = map[string]int{
+	"A320": 180,
+	"B738": 189,
+	"A321": 220,
+	"A319": 116,
+	"A20N": 236,
+	"B737": 149,
+	"B77W": 408,
+	"B789": 290,
+	"E75L": 86,
+	"E190": 100,
+	"C172": 2,
+	"A21N": 206,
+	"B739": 189,
+	"B38M": 178,
+	"A333": 335,
+	"CRJ9": 90,
+	"A359": 366,
+	"B763": 269,
+	"B788": 242,
+	"737": 160,
+	"P28A" : 3,
+	"B744": 524,
+	"B77L": 400,
+	"B772": 400,
+	"A332": 293,
+	"CRJ2": 50,
+	"CRJ7": 68,
+	"AT72": 74,
+	"AT43": 50,
+	"E145": 50,
+	"B752": 201,
+	"B748": 410,
+	"PC12": 10,
+	"SR22": 2,
+	"B407": 6,
+	"BE20": 9,
+	"C208": 13,
+	"E55P": 7,
+	"DH8B": 39,
+	"E170": 78,
+	"DH8D": 90,
+	"A388": 555,
+	"B39M": 220,
+	"B735": 132,
+	"BCS3": 130,
+	"B06": 	4,
+	"S22T": 3,
+	"C56X": 7,
+	"A35K": 412,
+	"B712": 117,
+	"C182": 3,
+	"A330": 335,
+	"B350": 9,
+	"B78X": 330,
+	"BE36": 6,
+	"CL30": 9,
+	"SU95": 98,
+	"787": 294,
+	"C25B": 8,
+	"E45X": 50,
+	"A339": 300,
+	"BCS1": 108,
+	"DA40": 2,
+	"A343": 335,
+	"B773": 479,
+	"C402": 9,
+	"C68A": 9,
+	"AJ27": 98,
+	"C25A": 5,
+	"GLEX": 19,
+	"GLF4": 19,
+	"LJ35": 8,
+	"AS50": 6,
+	"B733": 128,
+	"EC35": 8,
+	"B753": 243,
+	"E135": 37,
+}
+
 func (s *Store) CreateContract(ctx context.Context, c *Contract) error {
 
 	var (
@@ -166,4 +246,63 @@ func (s *Store) UpdatePaidPayouts(ctx context.Context, payouts []*PayoutsInfo) e
 	}
 
 	return nil
+}
+
+// TODO
+func (s *Store) CheckCountContarcts(userID string) (bool, error){
+
+	var contractCount int
+
+	row := s.Conn.QueryRow(context.Background(), "SELECT COUNT(id) FROM contracts WHERE user_id = $1 and status = 'waiting'", userID)
+	if err := row.Scan(&contractCount); err != nil {
+		return false, err
+	}
+
+	if contractCount > 2 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// TODO
+func (s *Store) CheckCountPaypal(payerID string) (bool, error){
+	var contractCount int
+
+	row := s.Conn.QueryRow(context.Background(), "SELECT COUNT(id) FROM contracts WHERE payer_id = $1 and status = 'waiting'", payerID)
+	if err := row.Scan(&contractCount); err != nil {
+		return false, err
+	}
+
+	if contractCount > 2 {
+		return false, nil
+	}
+
+	return true, nil
+
+}
+
+// TODO
+func (s *Store) CheckCountAircraft(aircraftType, flightNumber string, flightDate int64) (bool, error){
+	var contractCount int
+	var aircraftCap int
+
+	row := s.Conn.QueryRow(context.Background(), "SELECT COUNT(id) FROM contracts WHERE flight_number = $1 and flight_date  = $2 and status = 'waiting'", flightNumber, flightDate)
+	if err := row.Scan(&contractCount); err != nil {
+		return false, err
+	}
+
+	aircraftCap = 50 //Default
+	for k, v := range aircraftCapacity{
+		if aircraftType == k{
+			aircraftCap = v
+		}
+	}
+
+	if contractCount > aircraftCap/5 {
+		return false, nil
+	}
+
+	return true, nil
+
 }
