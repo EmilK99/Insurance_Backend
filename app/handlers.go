@@ -139,14 +139,14 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(400), "message": err.Error(), "status": "Error"})
 		return
 	}
-	//TODO
+
 	if req.TicketPrice > 1000 {
-		log.Errorf("The ticket is too expensive, suspicion of fraud")
-		w.WriteHeader(412)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(412), "message": "Invalid ticket price", "status": "Suspicion of fraud"})
+		log.Errorf("The ticket is too expensive")
+		w.WriteHeader(404)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(404), "message": "Invalid ticket price", "status": "Error"})
 		return
 	}
-	//TODO
+
 	checkContr, err := s.store.CheckCountContracts(req.UserID)
 	if err != nil {
 		log.Errorf("Unable to count contracts")
@@ -155,9 +155,9 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !checkContr {
-		log.Errorf("Too many opened contracts, suspicion of fraud")
-		w.WriteHeader(412)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(412), "message": "Too many opened contracts", "status": "Suspicion of fraud"})
+		log.Errorf("Too many opened contracts")
+		w.WriteHeader(404)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(404), "message": "Too many opened contracts", "status": "Error"})
 		return
 	}
 
@@ -168,14 +168,13 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
 		return
 	}
-	//TODO
+
 	if flightInfo.FiledDeparturetime-3600 > time.Now().Unix() {
 		log.Errorf("Late attempt to create contract, suspicion of fraud")
-		w.WriteHeader(412)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(412), "message": "Late attempt to create contract", "status": "Suspicion of fraud"})
+		w.WriteHeader(404)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(404), "message": "Late attempt to create contract", "status": "Error"})
 		return
 	}
-	//TODO
 
 	checkCap, err := s.store.CheckCountAircraft(flightInfo.Aircrafttype, req.FlightNumber, req.FlightDate)
 	if err != nil {
@@ -187,8 +186,8 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 
 	if !checkCap {
 		log.Errorf("Too many opened contracts on this flight, suspicion of fraud")
-		w.WriteHeader(412)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(412), "message": "Too many opened contracts on this flight", "status": "Suspicion of fraud"})
+		w.WriteHeader(404)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(404), "message": "Too many opened contracts on this flight", "status": "Error"})
 		return
 	}
 
@@ -279,9 +278,9 @@ func (s *server) CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.TicketPrice > 1000 {
-		log.Errorf("The ticket is too expensive, suspicion of fraud")
-		w.WriteHeader(412)
-		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(412), "message": "Invalid ticket price", "status": "Suspicion of fraud"})
+		log.Errorf("The ticket is too expensive")
+		w.WriteHeader(404)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(404), "message": "Invalid ticket price", "status": "Error"})
 		return
 	}
 
@@ -387,9 +386,7 @@ func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if contract.Status != "pending" || time.Unix(contract.FlightDate, 0).Before(time.Now()) {
-		_, err = s.store.Conn.Exec(s.ctx,
-			"DELETE FROM contracts WHERE id=$1",
-			contractID)
+		err = s.store.DeleteContractById(s.ctx, contractID)
 		if err != nil {
 			log.Errorf("Unable to UPDATE: %v\n", err)
 			return
@@ -399,9 +396,11 @@ func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = s.store.Conn.Exec(s.ctx,
-		"INSERT INTO contracts(payer_id) VALUES ($1) WHERE id=$2",
-		res.Payer.PayerID, contractID)
+	err = s.store.InsertPayerIdInContract(s.ctx, contractID, res.Payer.PayerID)
+	if err != nil {
+		log.Errorf("Can't insert payer id in contract %v : %v", contractID, err)
+		return
+	}
 
 	check, err := s.store.CheckCountPaypal(res.Payer.PayerID)
 	if err != nil {
@@ -411,14 +410,11 @@ func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !check {
-		_, err = s.store.Conn.Exec(s.ctx,
-			"DELETE FROM contracts WHERE id=$1",
-			contractID)
+		err = s.store.DeleteContractById(s.ctx, contractID)
 		if err != nil {
 			log.Errorf("Unable to UPDATE: %v\n", err)
 			return
 		}
-
 		log.Errorf("Too many opened contracts for :%v", res.Payer.PayerID)
 		return
 	}
