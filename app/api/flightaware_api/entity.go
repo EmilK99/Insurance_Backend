@@ -10,7 +10,7 @@ const (
 	SetAlert               = "SetAlert"
 	GetAlert               = "GetAlert"
 	DeleteAlert            = "DeleteAlert"
-	AirportInfo = "AirportInfo"
+	AirportInfo 		   = "AirportInfo"
 )
 
 type WS map[int]float64

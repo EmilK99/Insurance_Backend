@@ -140,11 +140,54 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.TicketPrice > 1000 {
+		log.Errorf("The ticket is too expensive")
+		w.WriteHeader(404)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(404), "message": "Invalid ticket price", "status": "Error"})
+		return
+	}
+
+	checkContr, err := s.store.CheckCountContracts(req.UserID)
+	if err != nil {
+		log.Errorf("Unable to count contracts")
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error()})
+		return
+	}
+	if !checkContr {
+		log.Errorf("Too many opened contracts")
+		w.WriteHeader(404)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(404), "message": "Too many opened contracts", "status": "Error"})
+		return
+	}
+
 	flightInfo, err := s.aeroApi.GetFlightInfoEx(req.FlightNumber, req.FlightDate)
 	if err != nil {
 		log.Errorf("Unable to get flight info: %v", err)
 		w.WriteHeader(500)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	if flightInfo.FiledDeparturetime-3600 > time.Now().Unix() {
+		log.Errorf("Late attempt to create contract, suspicion of fraud")
+		w.WriteHeader(404)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(404), "message": "Late attempt to create contract", "status": "Error"})
+		return
+	}
+
+	checkCap, err := s.store.CheckCountAircraft(flightInfo.Aircrafttype, req.FlightNumber, req.FlightDate)
+	if err != nil {
+		log.Errorf("Unable to check apircraft capacity: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+
+	if !checkCap {
+		log.Errorf("Too many opened contracts on this flight, suspicion of fraud")
+		w.WriteHeader(404)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(404), "message": "Too many opened contracts on this flight", "status": "Error"})
 		return
 	}
 
@@ -231,6 +274,13 @@ func (s *server) CalculateFeeHandler(w http.ResponseWriter, r *http.Request) {
 
 	if req.FlightDate == 0 {
 		w.WriteHeader(400)
+		return
+	}
+
+	if req.TicketPrice > 1000 {
+		log.Errorf("The ticket is too expensive")
+		w.WriteHeader(404)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(404), "message": "Invalid ticket price", "status": "Error"})
 		return
 	}
 
@@ -336,9 +386,7 @@ func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if contract.Status != "pending" || time.Unix(contract.FlightDate, 0).Before(time.Now()) {
-		_, err = s.store.Conn.Exec(s.ctx,
-			"DELETE FROM contracts WHERE id=$1",
-			contractID)
+		err = s.store.DeleteContractById(s.ctx, contractID)
 		if err != nil {
 			log.Errorf("Unable to UPDATE: %v\n", err)
 			return
@@ -348,7 +396,30 @@ func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, err := s.client.Client.NewRequest(s.ctx, http.MethodPost, "https://flightaware_api.sandbox.paypal.com/v2/checkout/orders/"+token+"/capture", nil)
+	err = s.store.InsertPayerIdInContract(s.ctx, contractID, res.Payer.PayerID)
+	if err != nil {
+		log.Errorf("Can't insert payer id in contract %v : %v", contractID, err)
+		return
+	}
+
+	check, err := s.store.CheckCountPaypal(res.Payer.PayerID)
+	if err != nil {
+		log.Errorf("Failed to get count contracts: %v", err)
+		w.WriteHeader(500)
+		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
+		return
+	}
+	if !check {
+		err = s.store.DeleteContractById(s.ctx, contractID)
+		if err != nil {
+			log.Errorf("Unable to UPDATE: %v\n", err)
+			return
+		}
+		log.Errorf("Too many opened contracts for :%v", res.Payer.PayerID)
+		return
+	}
+
+	req, err := s.client.Client.NewRequest(s.ctx, http.MethodPost, "https://api.sandbox.paypal.com/v2/checkout/orders/"+token+"/capture", nil)
 	if err != nil {
 		log.Error(err)
 	}

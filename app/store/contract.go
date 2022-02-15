@@ -7,6 +7,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+
+
 func (s *Store) CreateContract(ctx context.Context, c *Contract) error {
 
 	var (
@@ -166,4 +168,70 @@ func (s *Store) UpdatePaidPayouts(ctx context.Context, payouts []*PayoutsInfo) e
 	}
 
 	return nil
+}
+
+func (s *Store) CheckCountContracts(userID string) (bool, error) {
+
+	var contractCount int
+
+	row := s.Conn.QueryRow(context.Background(), "SELECT COUNT(id) FROM contracts WHERE user_id = $1 and status = 'waiting'", userID)
+	if err := row.Scan(&contractCount); err != nil {
+		return false, err
+	}
+
+	if contractCount > 2 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (s *Store) CheckCountPaypal(payerID string) (bool, error) {
+	var contractCount int
+
+	row := s.Conn.QueryRow(context.Background(), "SELECT COUNT(id) FROM contracts WHERE payer_id = $1 and status = 'waiting'", payerID)
+	if err := row.Scan(&contractCount); err != nil {
+		return false, err
+	}
+
+	if contractCount > 2 {
+		return false, nil
+	}
+
+	return true, nil
+
+}
+
+func (s *Store) CheckCountAircraft(aircraftType, flightNumber string, flightDate int64) (bool, error) {
+	var contractCount int
+
+	row := s.Conn.QueryRow(context.Background(), "SELECT COUNT(id) FROM contracts WHERE flight_number = $1 and flight_date  = $2 and status = 'waiting'", flightNumber, flightDate)
+	if err := row.Scan(&contractCount); err != nil {
+		return false, err
+	}
+
+	aircraftCap, ok := aircraftCapacity[aircraftType]
+	if !ok {
+		aircraftCap = defaultAircraftCap
+	}
+
+	if float64(contractCount/aircraftCap) > 0.2 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (s *Store) DeleteContractById(ctx context.Context,contractId int) error{
+	_, err := s.Conn.Exec(ctx,
+		"DELETE FROM contracts WHERE id=$1",
+		contractId)
+	return err
+}
+
+func (s *Store) InsertPayerIdInContract(ctx context.Context,contractId int,payerId string) error{
+	_, err := s.Conn.Exec(ctx,
+		"INSERT INTO contracts(payer_id) VALUES ($1) WHERE id=$2",
+		payerId, contractId)
+	return err
 }

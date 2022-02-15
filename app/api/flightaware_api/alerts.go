@@ -8,7 +8,7 @@ import (
 )
 
 func (a AeroAPI) RegisterAlertsEndpoint(host string) error {
-	aeroApiURLStr := a.NewRegisterAlertEndpointURL(fmt.Sprintf("https://%s/flightaware_api/alerts", host))
+	aeroApiURLStr := a.NewRegisterAlertEndpointURL(fmt.Sprintf("https://%s/api/alerts", host))
 
 	client := &http.Client{}
 	re, err := http.NewRequest("POST", aeroApiURLStr, nil)
