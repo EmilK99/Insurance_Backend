@@ -139,16 +139,16 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(400), "message": err.Error(), "status": "Error"})
 		return
 	}
-//TODO
+	//TODO
 	if req.TicketPrice > 1000 {
 		log.Errorf("The ticket is too expensive, suspicion of fraud")
 		w.WriteHeader(412)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(412), "message": "Invalid ticket price", "status": "Suspicion of fraud"})
 		return
 	}
-//TODO
-	checkContr, err := s.store.CheckCountContarcts(req.UserID)
-	if err != nil{
+	//TODO
+	checkContr, err := s.store.CheckCountContracts(req.UserID)
+	if err != nil {
 		log.Errorf("Unable to count contracts")
 		w.WriteHeader(500)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error()})
@@ -168,16 +168,16 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(500), "message": err.Error(), "status": "Error"})
 		return
 	}
-//TODO
-	if flightInfo.FiledDeparturetime - 3600 > time.Now().Unix(){
+	//TODO
+	if flightInfo.FiledDeparturetime-3600 > time.Now().Unix() {
 		log.Errorf("Late attempt to create contract, suspicion of fraud")
 		w.WriteHeader(412)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(412), "message": "Late attempt to create contract", "status": "Suspicion of fraud"})
 		return
 	}
-//TODO
+	//TODO
 
-	checkCap, err := s.store.CheckCountAircraft(flightInfo.Aircrafttype, req.FlightNumber,req.FlightDate)
+	checkCap, err := s.store.CheckCountAircraft(flightInfo.Aircrafttype, req.FlightNumber, req.FlightDate)
 	if err != nil {
 		log.Errorf("Unable to check apircraft capacity: %v", err)
 		w.WriteHeader(500)
@@ -185,13 +185,12 @@ func (s *server) HandleCreateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !checkCap{
+	if !checkCap {
 		log.Errorf("Too many opened contracts on this flight, suspicion of fraud")
 		w.WriteHeader(412)
 		_ = json.NewEncoder(w).Encode(map[string]string{"code": strconv.Itoa(412), "message": "Too many opened contracts on this flight", "status": "Suspicion of fraud"})
 		return
 	}
-
 
 	if req.Cancellation {
 		premium, err = s.aeroApi.CalculateCancellation(req.FlightNumber, req.FlightDate, req.TicketPrice)
@@ -400,7 +399,6 @@ func (s *server) HandlerSuccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//TODO
 	_, err = s.store.Conn.Exec(s.ctx,
 		"INSERT INTO contracts(payer_id) VALUES ($1) WHERE id=$2",
 		res.Payer.PayerID, contractID)
@@ -551,4 +549,3 @@ func (s *server) HandleWithdrawPremium(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 }
-

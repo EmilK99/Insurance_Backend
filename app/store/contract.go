@@ -27,8 +27,8 @@ var aircraftCapacity = map[string]int{
 	"A359": 366,
 	"B763": 269,
 	"B788": 242,
-	"737": 160,
-	"P28A" : 3,
+	"737":  160,
+	"P28A": 3,
 	"B744": 524,
 	"B77L": 400,
 	"B772": 400,
@@ -53,7 +53,7 @@ var aircraftCapacity = map[string]int{
 	"B39M": 220,
 	"B735": 132,
 	"BCS3": 130,
-	"B06": 	4,
+	"B06":  4,
 	"S22T": 3,
 	"C56X": 7,
 	"A35K": 412,
@@ -65,7 +65,7 @@ var aircraftCapacity = map[string]int{
 	"BE36": 6,
 	"CL30": 9,
 	"SU95": 98,
-	"787": 294,
+	"787":  294,
 	"C25B": 8,
 	"E45X": 50,
 	"A339": 300,
@@ -91,7 +91,7 @@ var aircraftCapacity = map[string]int{
 	"CRJX": 100,
 	"E295": 100,
 	"SF34": 37,
-	"767": 304,
+	"767":  304,
 	"B734": 146,
 	"E35L": 13,
 	"A139": 15,
@@ -107,15 +107,15 @@ var aircraftCapacity = map[string]int{
 	"BE9L": 9,
 	"CL60": 19,
 	"DH8C": 56,
-	"777": 	550,
+	"777":  550,
 	"A109": 7,
 	"BE58": 5,
 	"D228": 19,
 	"E290": 106,
 	"F2TH": 19,
-	"F70": 	79,
+	"F70":  79,
 	"P180": 9,
-	"747": 524,
+	"747":  524,
 	//"74F": 581,
 	"B429": 7,
 	"B736": 108,
@@ -124,7 +124,7 @@ var aircraftCapacity = map[string]int{
 	"C55B": 7,
 	"C560": 8,
 	"C680": 12,
-	"CN1": 2,
+	"CN1":  2,
 	"DA42": 3,
 	"DHC6": 20,
 	"E120": 30,
@@ -137,13 +137,13 @@ var aircraftCapacity = map[string]int{
 	"P210": 5,
 	"PA44": 3,
 	"PC24": 10,
-	"R44": 	3,
-	"SW4": 19,
-	"340": 440,
-	"350": 325,
+	"R44":  3,
+	"SW4":  19,
+	"340":  440,
+	"350":  325,
 	"A124": 438,
 	"A346": 440,
-	"AA5": 1,
+	"AA5":  1,
 	"AN12": 90,
 	"AN24": 50,
 	"AS65": 12,
@@ -174,7 +174,7 @@ var aircraftCapacity = map[string]int{
 	"L410": 17,
 	"LJ25": 8,
 	"LJ45": 9,
-	"M7": 4,
+	"M7":   4,
 	"MA60": 60,
 	"MD88": 172,
 	"P32R": 6,
@@ -346,8 +346,7 @@ func (s *Store) UpdatePaidPayouts(ctx context.Context, payouts []*PayoutsInfo) e
 	return nil
 }
 
-// TODO
-func (s *Store) CheckCountContarcts(userID string) (bool, error){
+func (s *Store) CheckCountContracts(userID string) (bool, error) {
 
 	var contractCount int
 
@@ -363,8 +362,7 @@ func (s *Store) CheckCountContarcts(userID string) (bool, error){
 	return true, nil
 }
 
-// TODO
-func (s *Store) CheckCountPaypal(payerID string) (bool, error){
+func (s *Store) CheckCountPaypal(payerID string) (bool, error) {
 	var contractCount int
 
 	row := s.Conn.QueryRow(context.Background(), "SELECT COUNT(id) FROM contracts WHERE payer_id = $1 and status = 'waiting'", payerID)
@@ -380,27 +378,28 @@ func (s *Store) CheckCountPaypal(payerID string) (bool, error){
 
 }
 
-// TODO
-func (s *Store) CheckCountAircraft(aircraftType, flightNumber string, flightDate int64) (bool, error){
+func (s *Store) CheckCountAircraft(aircraftType, flightNumber string, flightDate int64) (bool, error) {
 	var contractCount int
-	var aircraftCap int
 
 	row := s.Conn.QueryRow(context.Background(), "SELECT COUNT(id) FROM contracts WHERE flight_number = $1 and flight_date  = $2 and status = 'waiting'", flightNumber, flightDate)
 	if err := row.Scan(&contractCount); err != nil {
 		return false, err
 	}
 
-	aircraftCap = 50 //Default
-	for k, v := range aircraftCapacity{
-		if aircraftType == k{
+	aircraftCap, ok := aircraftCapacity[aircraftType]
+	if !ok {
+		aircraftCap = 50 //CONST DefaultAircraftCap
+	}
+
+	for k, v := range aircraftCapacity {
+		if aircraftType == k {
 			aircraftCap = v
 		}
 	}
 
-	if contractCount > aircraftCap/5 {
+	if float64(contractCount/aircraftCap) > 0.2 { //CONST MaxContractsPerFlight
 		return false, nil
 	}
 
 	return true, nil
-
 }
